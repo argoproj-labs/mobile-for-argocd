@@ -18,8 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { colors } from "../../../lib/theme";
-import { useArgoClient } from "../../../lib/client";
-import { tokenStorage } from "../../../lib/storage";
+import { useAccounts, useArgoClient } from "../../../lib/client";
 
 const MONO = Platform.OS === "ios" ? "Menlo" : "monospace";
 
@@ -53,26 +52,18 @@ export default function UserScreen() {
   const router = useRouter();
   const client = useArgoClient();
   const queryClient = useQueryClient();
+  const {
+    accounts,
+    activeAccountId,
+    switchAccount,
+    removeAccount,
+    updateUsername,
+  } = useAccounts();
 
   const { data: userInfo, isLoading } = useQuery({
     queryKey: client.queryKeys.userInfo(),
     queryFn: () => client.getUserInfo(),
   });
-
-  const handleLogout = () => {
-    Alert.alert("Log out", "Are you sure you want to log out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Log out",
-        style: "destructive",
-        onPress: async () => {
-          await tokenStorage.clear();
-          queryClient.clear();
-          router.replace("/login");
-        },
-      },
-    ]);
-  };
 
   const hostname = (() => {
     try {
@@ -81,6 +72,61 @@ export default function UserScreen() {
       return client.serverUrl;
     }
   })();
+
+  // Keep the saved account's display name in sync once we know who's logged in
+  React.useEffect(() => {
+    const current = accounts.find((a) => a.id === activeAccountId);
+    if (
+      userInfo?.username &&
+      current &&
+      current.username !== userInfo.username
+    ) {
+      updateUsername(activeAccountId!, userInfo.username);
+    }
+  }, [userInfo?.username, activeAccountId, accounts, updateUsername]);
+
+  const accountHost = (url: string) => {
+    try {
+      return new URL(url).hostname;
+    } catch {
+      return url;
+    }
+  };
+
+  const handleSwitchAccount = async (id: string) => {
+    if (id === activeAccountId) return;
+    await switchAccount(id);
+    queryClient.clear();
+    router.replace("/(app)/");
+  };
+
+  const handleRemoveAccount = (id: string) => {
+    const account = accounts.find((a) => a.id === id);
+    const label = account?.username || accountHost(account?.serverUrl ?? "");
+    const consequence =
+      accounts.length === 1
+        ? "You'll be signed out."
+        : id === activeAccountId
+          ? "You'll be switched to another account."
+          : "";
+    Alert.alert("Remove account", `Remove ${label}? ${consequence}`.trim(), [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          queryClient.clear();
+          await removeAccount(id);
+        },
+      },
+    ]);
+  };
+
+  const handleAddAccount = () => {
+    router.replace("/login");
+  };
+
+  const handleLogout = () => handleRemoveAccount(client.accountId);
 
   return (
     <View style={s.root}>
@@ -146,6 +192,60 @@ export default function UserScreen() {
             </View>
           </>
         )}
+
+        <SectionLabel label="Accounts" />
+        <View style={s.card}>
+          {accounts.map((account) => {
+            const isActive = account.id === activeAccountId;
+            return (
+              <TouchableOpacity
+                key={account.id}
+                style={[s.accountRow, s.infoRowBorder]}
+                onPress={() => handleSwitchAccount(account.id)}
+                activeOpacity={0.7}
+              >
+                <View style={s.accountRowMain}>
+                  <Text style={s.accountUsername} numberOfLines={1}>
+                    {account.username || "Unknown user"}
+                  </Text>
+                  <Text style={s.accountHost} numberOfLines={1}>
+                    {accountHost(account.serverUrl)}
+                  </Text>
+                </View>
+                {isActive ? (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={20}
+                    color={colors.success}
+                  />
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => handleRemoveAccount(account.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={18}
+                      color={colors.faint}
+                    />
+                  </TouchableOpacity>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+          <TouchableOpacity
+            style={s.addAccountRow}
+            onPress={handleAddAccount}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="add-circle-outline"
+              size={18}
+              color={colors.orange}
+            />
+            <Text style={s.addAccountText}>Add account</Text>
+          </TouchableOpacity>
+        </View>
 
         <SectionLabel label="Session" />
         <View style={s.card}>
@@ -279,6 +379,42 @@ const s = StyleSheet.create({
     color: colors.text,
     fontFamily: MONO,
     fontWeight: "500",
+  },
+
+  // Accounts
+  accountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  accountRowMain: {
+    flex: 1,
+    gap: 2,
+  },
+  accountUsername: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.text,
+  },
+  accountHost: {
+    fontSize: 12,
+    fontFamily: MONO,
+    color: colors.muted,
+  },
+  addAccountRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
+  },
+  addAccountText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.orange,
   },
 
   // Logout

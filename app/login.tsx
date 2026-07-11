@@ -9,7 +9,6 @@ import {
   Animated,
   Image,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -36,14 +35,13 @@ import {
 import { colors } from "../lib/theme";
 import {
   fetchAuthSettings,
-  hostFromUrl,
   loginWithPassword,
   normalizeUrl,
   resolveOidcConfig,
   type AuthSettings,
   type OidcFlowConfig,
 } from "../lib/api";
-import { serverStorage, tokenStorage } from "../lib/storage";
+import { accountsStorage, serverStorage } from "../lib/storage";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -170,28 +168,6 @@ function ArgoWordmark({ size = 28 }: { size?: number }) {
   );
 }
 
-// ── Server chip ────────────────────────────────────────────────
-function ServerChip({
-  url,
-  onPress,
-}: {
-  url: string | null;
-  onPress: () => void;
-}) {
-  const label = url ? hostFromUrl(url) : "tap to add server";
-  const hasServer = !!url;
-
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.chip} activeOpacity={0.7}>
-      <View style={[styles.chipDot, !hasServer && styles.chipDotOff]} />
-      <Text style={styles.chipText} numberOfLines={1}>
-        {label}
-      </Text>
-      <Ionicons name="chevron-down" size={12} color="rgba(255,255,255,0.5)" />
-    </TouchableOpacity>
-  );
-}
-
 // ── Error toast ────────────────────────────────────────────────
 function ErrorToast({
   visible,
@@ -311,7 +287,11 @@ interface FieldProps {
   value: string;
   onChangeText: (text: string) => void;
   secureTextEntry?: boolean;
-  autoComplete?: "username" | "current-password" | "off";
+  autoComplete?: "username" | "current-password" | "url" | "off";
+  keyboardType?: "default" | "url";
+  placeholder?: string;
+  returnKeyType?: "done" | "next";
+  onSubmitEditing?: () => void;
   error?: boolean;
   trailing?: React.ReactNode;
   onFocus?: () => void;
@@ -325,6 +305,10 @@ function Field({
   onChangeText,
   secureTextEntry,
   autoComplete,
+  keyboardType,
+  placeholder,
+  returnKeyType,
+  onSubmitEditing,
   error,
   trailing,
   onFocus,
@@ -354,7 +338,11 @@ function Field({
           autoCapitalize="none"
           autoCorrect={false}
           autoComplete={autoComplete}
+          keyboardType={keyboardType}
+          placeholder={placeholder}
           placeholderTextColor={colors.faint}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
           onFocus={onFocus}
           onBlur={onBlur}
           keyboardAppearance="dark"
@@ -384,180 +372,6 @@ function EyeToggle({ open, onPress }: { open: boolean; onPress: () => void }) {
 
 const DEMO_SERVER = "https://cd.apps.argoproj.io";
 
-// ── Server URL modal ───────────────────────────────────────────
-function ServerModal({
-  visible,
-  initialValue,
-  onSave,
-  onCancel,
-}: {
-  visible: boolean;
-  initialValue: string;
-  onSave: (url: string) => void;
-  onCancel: () => void;
-}) {
-  const [input, setInput] = useState(initialValue);
-  const [validating, setValidating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (visible) {
-      setInput(initialValue);
-      setError(null);
-    }
-  }, [visible, initialValue]);
-
-  const handleSave = useCallback(async () => {
-    const url = normalizeUrl(input);
-    if (!url) return;
-
-    try {
-      const parsed = new URL(url);
-      if (!parsed.hostname) throw new Error();
-    } catch {
-      setError("Enter a valid URL, e.g. https://argocd.example.com");
-      return;
-    }
-
-    setValidating(true);
-    setError(null);
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      await fetch(`${url}/api/version`, { signal: controller.signal });
-      clearTimeout(timeout);
-    } catch (e: unknown) {
-      setValidating(false);
-      if (e instanceof Error && e.name === "AbortError") {
-        setError("Connection timed out. Check the URL and your network.");
-      } else {
-        setError("Could not reach the server. Check the URL and your network.");
-      }
-      return;
-    }
-    setValidating(false);
-    onSave(url);
-  }, [input, onSave]);
-
-  const handleDemo = useCallback(() => {
-    setInput(DEMO_SERVER);
-    setError(null);
-  }, []);
-
-  const canSave = !!input.trim() && !validating;
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.modalOverlay}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFillObject}
-          onPress={onCancel}
-          activeOpacity={1}
-        />
-        <View
-          style={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Server URL</Text>
-          <Text style={styles.modalHint}>
-            Enter the URL of your Argo CD instance
-          </Text>
-          <View
-            style={[
-              styles.field,
-              {
-                borderColor: error ? "rgba(255,107,107,0.5)" : colors.hairline,
-                marginTop: 20,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.fieldLabel,
-                { color: error ? colors.danger : colors.faint },
-              ]}
-            >
-              URL
-            </Text>
-            <View style={styles.fieldRow}>
-              <TextInput
-                style={styles.fieldInput}
-                value={input}
-                onChangeText={(t) => {
-                  setInput(t);
-                  setError(null);
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="url"
-                keyboardType="url"
-                keyboardAppearance="dark"
-                placeholder="https://argocd.example.com"
-                placeholderTextColor={colors.faint}
-                returnKeyType="done"
-                onSubmitEditing={handleSave}
-                autoFocus
-              />
-            </View>
-          </View>
-
-          {error ? (
-            <View style={styles.modalError}>
-              <Ionicons name="alert-circle" size={14} color={colors.danger} />
-              <Text style={styles.modalErrorText}>{error}</Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={handleDemo}
-              style={styles.demoBtn}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="flask-outline" size={14} color={colors.orange} />
-              <Text style={styles.demoBtnText}>Try public demo server</Text>
-            </TouchableOpacity>
-          )}
-
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              onPress={onCancel}
-              style={[styles.btn, styles.btnGhost]}
-              disabled={validating}
-            >
-              <Text style={[styles.btnText, { color: colors.muted }]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSave}
-              style={[
-                styles.btn,
-                styles.btnPrimary,
-                !canSave && styles.btnPrimaryDisabled,
-              ]}
-              disabled={!canSave}
-            >
-              {validating ? (
-                <View style={styles.spinner} />
-              ) : (
-                <Text style={styles.btnText}>Save</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
-
 // ── Login screen ───────────────────────────────────────────────
 type LoginState =
   | "idle"
@@ -572,6 +386,9 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
 
   const [serverUrl, setServerUrl] = useState<string | null>(null);
+  const [serverInput, setServerInput] = useState("");
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [serverValidating, setServerValidating] = useState(false);
   const [authSettings, setAuthSettings] = useState<AuthSettings | null>(null);
   const [loginState, setLoginState] = useState<LoginState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -579,21 +396,73 @@ export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [focused, setFocused] = useState<"username" | "password" | null>(null);
+  const [focused, setFocused] = useState<
+    "server" | "username" | "password" | null
+  >(null);
 
-  const [showServerModal, setShowServerModal] = useState(false);
-  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0);
+  const [hasExistingAccounts, setHasExistingAccounts] = useState(false);
 
   // Load saved server URL on mount
   useEffect(() => {
     serverStorage.get().then((url) => {
       if (url) {
+        setServerInput(url);
         setServerUrl(url);
-      } else {
-        setShowServerModal(true);
       }
     });
+    accountsStorage.list().then((accounts) => {
+      setHasExistingAccounts(accounts.length > 0);
+    });
   }, []);
+
+  // Validate and commit whatever's in the server field — called on blur
+  const commitServerUrl = useCallback(
+    async (raw: string) => {
+      const url = normalizeUrl(raw);
+      if (!url || url === serverUrl) return;
+
+      try {
+        const parsed = new URL(url);
+        if (!parsed.hostname) throw new Error();
+      } catch {
+        setServerError("Enter a valid URL, e.g. https://argocd.example.com");
+        return;
+      }
+
+      setServerValidating(true);
+      setServerError(null);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+        await fetch(`${url}/api/version`, { signal: controller.signal });
+        clearTimeout(timeout);
+      } catch (e: unknown) {
+        setServerValidating(false);
+        if (e instanceof Error && e.name === "AbortError") {
+          setServerError(
+            "Connection timed out. Check the URL and your network.",
+          );
+        } else {
+          setServerError(
+            "Could not reach the server. Check the URL and your network.",
+          );
+        }
+        return;
+      }
+      setServerValidating(false);
+      serverStorage.set(url);
+      setServerInput(url);
+      setServerUrl(url);
+      setAuthSettings(null);
+    },
+    [serverUrl],
+  );
+
+  const handleTryDemo = useCallback(() => {
+    setServerInput(DEMO_SERVER);
+    setServerError(null);
+    commitServerUrl(DEMO_SERVER);
+  }, [commitServerUrl]);
 
   // Fetch auth settings when server URL changes or is re-saved
   useEffect(() => {
@@ -609,7 +478,7 @@ export default function LoginScreen() {
         setAuthSettings({ userLoginsDisabled: false });
         setLoginState("idle");
       });
-  }, [serverUrl, settingsRefreshKey]);
+  }, [serverUrl]);
 
   // ── OIDC / SSO ──────────────────────────────────────────────
   const oidcConfig: OidcFlowConfig | null = useMemo(
@@ -664,7 +533,10 @@ export default function LoginScreen() {
   }, [authSettings]);
 
   const canSubmit =
-    loginState === "idle" && username.trim().length > 0 && password.length > 0;
+    loginState === "idle" &&
+    !!serverUrl &&
+    username.trim().length > 0 &&
+    password.length > 0;
 
   const handleSignIn = useCallback(async () => {
     if (!canSubmit || !serverUrl) return;
@@ -676,7 +548,11 @@ export default function LoginScreen() {
         username.trim(),
         password,
       );
-      await tokenStorage.set(token);
+      await accountsStorage.add({
+        serverUrl,
+        token,
+        username: username.trim(),
+      });
       setLoginState("success");
       setTimeout(() => router.replace("/(app)/"), 900);
     } catch (e: unknown) {
@@ -688,7 +564,8 @@ export default function LoginScreen() {
   }, [canSubmit, serverUrl, username, password, router]);
 
   const handleSSO = useCallback(async () => {
-    if (!oidcConfig || !discovery || loginState !== "idle") return;
+    if (!oidcConfig || !discovery || !serverUrl || loginState !== "idle")
+      return;
     setLoginState("sso-pending");
     try {
       const request = new AuthRequest({
@@ -713,7 +590,7 @@ export default function LoginScreen() {
         );
         const token = tokenResponse.idToken;
         if (!token) throw new Error("No id_token in token response");
-        await tokenStorage.set(token);
+        await accountsStorage.add({ serverUrl, token });
         setLoginState("success");
         setTimeout(() => router.replace("/(app)/"), 900);
       } else {
@@ -725,25 +602,17 @@ export default function LoginScreen() {
       setLoginState("error");
       setTimeout(() => setLoginState("idle"), 2400);
     }
-  }, [oidcConfig, discovery, loginState, redirectUri, router]);
+  }, [oidcConfig, discovery, serverUrl, loginState, redirectUri, router]);
 
   const handleAnonymous = useCallback(async () => {
     if (!serverUrl) {
-      setShowServerModal(true);
+      setServerError("Enter a server URL to continue");
       return;
     }
-    await tokenStorage.set("anonymous");
+    await accountsStorage.add({ serverUrl, token: "anonymous" });
     setLoginState("success");
     setTimeout(() => router.replace("/(app)/"), 900);
   }, [serverUrl, router]);
-
-  const handleSaveServer = useCallback((url: string) => {
-    serverStorage.set(url);
-    setServerUrl(url);
-    setAuthSettings(null);
-    setSettingsRefreshKey((k) => k + 1);
-    setShowServerModal(false);
-  }, []);
 
   const isLoading = loginState === "signing-in" || loginState === "sso-pending";
 
@@ -761,10 +630,17 @@ export default function LoginScreen() {
       <GlowEffects />
       <Starfield />
 
-      {/* Server chip */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 16 }]}>
-        <ServerChip url={serverUrl} onPress={() => setShowServerModal(true)} />
-      </View>
+      {/* Cancel — only shown when adding an account alongside existing ones */}
+      {hasExistingAccounts && (
+        <TouchableOpacity
+          onPress={() => router.replace("/(app)/")}
+          style={[styles.cancelBtn, { top: insets.top + 16 }]}
+          activeOpacity={0.6}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.cancelBtnText}>Cancel</Text>
+        </TouchableOpacity>
+      )}
 
       {/* Error toast */}
       <ErrorToast visible={loginState === "error"} message={errorMessage} />
@@ -790,11 +666,64 @@ export default function LoginScreen() {
               resizeMode="contain"
             />
             <ArgoWordmark size={28} />
-            <Text style={styles.tagline}>{"Let's get stuff deployed!"}</Text>
+            <Text style={styles.tagline}>
+              {hasExistingAccounts
+                ? "Add another account"
+                : "Let's get stuff deployed!"}
+            </Text>
           </View>
 
           {/* Form */}
           <View style={styles.form}>
+            {/* Server URL */}
+            <Field
+              label="Server URL"
+              value={serverInput}
+              onChangeText={(t) => {
+                setServerInput(t);
+                setServerError(null);
+              }}
+              placeholder="https://argocd.example.com"
+              keyboardType="url"
+              autoComplete="url"
+              returnKeyType="next"
+              onSubmitEditing={() => commitServerUrl(serverInput)}
+              error={!!serverError}
+              focused={focused === "server"}
+              onFocus={() => setFocused("server")}
+              onBlur={() => {
+                setFocused(null);
+                commitServerUrl(serverInput);
+              }}
+              trailing={
+                serverValidating ? (
+                  <View style={styles.fieldSpinner} />
+                ) : undefined
+              }
+            />
+            {serverError ? (
+              <View style={styles.serverErrorRow}>
+                <Ionicons name="alert-circle" size={14} color={colors.danger} />
+                <Text style={styles.modalErrorText}>{serverError}</Text>
+              </View>
+            ) : (
+              !serverUrl && (
+                <TouchableOpacity
+                  onPress={handleTryDemo}
+                  style={styles.demoBtn}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name="flask-outline"
+                    size={14}
+                    color={colors.orange}
+                  />
+                  <Text style={styles.demoBtnText}>Try public demo server</Text>
+                </TouchableOpacity>
+              )
+            )}
+            <View style={{ height: 4 }} />
+
             {/* SSO */}
             {ssoConfigured && (
               <TouchableOpacity
@@ -934,14 +863,6 @@ export default function LoginScreen() {
 
       {/* Overlays */}
       <SuccessOverlay visible={loginState === "success"} />
-      <ServerModal
-        visible={showServerModal}
-        initialValue={serverUrl ?? ""}
-        onSave={handleSaveServer}
-        onCancel={() => {
-          if (serverUrl) setShowServerModal(false);
-        }}
-      />
     </View>
   );
 }
@@ -986,46 +907,17 @@ const styles = StyleSheet.create({
     color: colors.orange,
   },
 
-  // Chip
-  topBar: {
+  cancelBtn: {
     position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
-    alignItems: "center",
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    left: 16,
+    zIndex: 11,
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    backgroundColor: "rgba(255,255,255,0.06)",
-    borderWidth: 1,
-    borderColor: colors.hairline,
+    paddingHorizontal: 4,
   },
-  chipDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.success,
-    shadowColor: colors.success,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
-  },
-  chipDotOff: {
-    backgroundColor: colors.faint,
-    shadowOpacity: 0,
-  },
-  chipText: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontSize: 11,
+  cancelBtnText: {
+    fontSize: 15,
+    fontWeight: "500",
     color: colors.muted,
-    letterSpacing: 0.2,
-    maxWidth: 200,
   },
 
   // Toast
@@ -1239,43 +1131,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  // Server modal
-  modalOverlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  modalSheet: {
-    backgroundColor: "#1C2140",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    borderWidth: 1,
-    borderColor: colors.hairline,
-    borderBottomWidth: 0,
-  },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.hairlineHi,
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    color: colors.text,
-    letterSpacing: -0.4,
-  },
-  modalHint: {
-    fontSize: 14,
-    color: colors.muted,
-    marginTop: 6,
-    letterSpacing: -0.1,
-  },
-  modalError: {
+  // Server field
+  serverErrorRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
@@ -1299,11 +1156,6 @@ const styles = StyleSheet.create({
     color: colors.orange,
     fontWeight: "500",
   },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 16,
-  },
 
   // Spinner
   spinner: {
@@ -1313,5 +1165,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "rgba(255,255,255,0.3)",
     borderTopColor: "#fff",
+  },
+  fieldSpinner: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.hairlineHi,
+    borderTopColor: colors.orange,
   },
 });

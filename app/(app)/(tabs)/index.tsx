@@ -680,11 +680,11 @@ export default function AppsScreen() {
 
   // Load favorites on mount; abort watch on unmount
   useEffect(() => {
-    favoritesStorage.get().then(setFavorites);
+    favoritesStorage.get(client.accountId).then(setFavorites);
     return () => {
       abortRef.current?.abort();
     };
-  }, []);
+  }, [client.accountId]);
 
   // Initial list fetch — react-query owns loading/error/data
   const queryKey = client.queryKeys.applications();
@@ -753,18 +753,21 @@ export default function AppsScreen() {
   }, [data?.resourceVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Favorites toggle
-  const toggleFav = useCallback((key: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      favoritesStorage.set(next);
-      return next;
-    });
-  }, []);
+  const toggleFav = useCallback(
+    (key: string) => {
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        favoritesStorage.set(client.accountId, next);
+        return next;
+      });
+    },
+    [client.accountId],
+  );
 
   // Health/sync counts (for bar + chips + filter badges)
   const healthCounts = useMemo(() => {

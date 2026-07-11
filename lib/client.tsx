@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useRouter } from "expo-router";
 import {
   deleteResource,
@@ -27,12 +33,13 @@ import {
   type SyncApplicationOptions,
   type UserInfo,
 } from "./api";
-import { serverStorage, tokenStorage } from "./storage";
+import { accountsStorage, type Account } from "./storage";
 
 export class ArgoClient {
   constructor(
     readonly serverUrl: string,
     readonly token: string,
+    readonly accountId: string,
   ) {}
 
   get hostname(): string {
@@ -44,7 +51,9 @@ export class ArgoClient {
   }
 
   get queryKeys() {
-    const s = this.serverUrl;
+    // Partition the cache by account, not server URL, since two accounts
+    // (e.g. different users) can share the same server.
+    const s = this.accountId;
     return {
       userInfo: () => ["userInfo", s] as const,
       applications: () => ["applications", s] as const,
@@ -393,6 +402,24 @@ export function useArgoClient(): ArgoClient {
   return client;
 }
 
+interface AccountsContextValue {
+  accounts: Account[];
+  activeAccountId: string | null;
+  switchAccount: (id: string) => Promise<void>;
+  removeAccount: (id: string) => Promise<void>;
+  refreshAccounts: () => Promise<void>;
+  updateUsername: (id: string, username: string) => Promise<void>;
+}
+
+const AccountsContext = createContext<AccountsContextValue | null>(null);
+
+export function useAccounts(): AccountsContextValue {
+  const ctx = useContext(AccountsContext);
+  if (!ctx)
+    throw new Error("useAccounts must be used within ArgoClientProvider");
+  return ctx;
+}
+
 export function ArgoClientProvider({
   children,
 }: {
@@ -400,24 +427,84 @@ export function ArgoClientProvider({
 }) {
   const router = useRouter();
   const [client, setClient] = useState<ArgoClient | null>(null);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [activeAccountId, setActiveAccountId] = useState<string | null>(null);
+
+  const activate = useCallback((account: Account) => {
+    setActiveAccountId(account.id);
+    setClient(new ArgoClient(account.serverUrl, account.token, account.id));
+  }, []);
+
+  const refreshAccounts = useCallback(async () => {
+    const [list, active] = await Promise.all([
+      accountsStorage.list(),
+      accountsStorage.getActive(),
+    ]);
+    setAccounts(list);
+    if (!active) {
+      router.replace("/login");
+      return;
+    }
+    activate(active);
+  }, [router, activate]);
 
   useEffect(() => {
-    Promise.all([tokenStorage.get(), serverStorage.get()]).then(
-      ([token, server]) => {
-        if (token === null || !server) {
-          router.replace("/login");
-        } else {
-          setClient(new ArgoClient(server, token));
-        }
-      },
+    refreshAccounts();
+    // Only run once on mount — switching/removing accounts updates state
+    // directly instead of re-reading storage.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const switchAccount = useCallback(
+    async (id: string) => {
+      const account = accounts.find((a) => a.id === id);
+      if (!account) return;
+      await accountsStorage.setActiveId(id);
+      activate(account);
+    },
+    [accounts, activate],
+  );
+
+  const removeAccount = useCallback(
+    async (id: string) => {
+      await accountsStorage.remove(id);
+      const list = await accountsStorage.list();
+      setAccounts(list);
+      const active = await accountsStorage.getActive();
+      if (!active) {
+        setClient(null);
+        setActiveAccountId(null);
+        router.replace("/login");
+        return;
+      }
+      activate(active);
+    },
+    [router, activate],
+  );
+
+  const updateUsername = useCallback(async (id: string, username: string) => {
+    await accountsStorage.updateUsername(id, username);
+    setAccounts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, username } : a)),
     );
-  }, [router]);
+  }, []);
 
   if (!client) return null;
 
   return (
-    <ArgoClientContext.Provider value={client}>
-      {children}
-    </ArgoClientContext.Provider>
+    <AccountsContext.Provider
+      value={{
+        accounts,
+        activeAccountId,
+        switchAccount,
+        removeAccount,
+        refreshAccounts,
+        updateUsername,
+      }}
+    >
+      <ArgoClientContext.Provider value={client}>
+        {children}
+      </ArgoClientContext.Provider>
+    </AccountsContext.Provider>
   );
 }
