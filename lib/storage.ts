@@ -3,6 +3,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const SERVER_URL_KEY = "argocd:server-url";
 const TOKEN_KEY = "argocd:token";
 
+// Sentinel stored as the "token" after a browser (WebView) login. Argo CD's
+// argocd.token cookie is HttpOnly, so there is no bearer to keep — auth rides
+// the shared native cookie jar instead. authHeader() sends no Bearer for this.
+export const COOKIE_SESSION = "__cookie_session__";
+
 export const serverStorage = {
   get: () => AsyncStorage.getItem(SERVER_URL_KEY),
   set: (url: string) => AsyncStorage.setItem(SERVER_URL_KEY, url),

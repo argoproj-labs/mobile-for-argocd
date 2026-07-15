@@ -1,3 +1,5 @@
+import { COOKIE_SESSION } from "./storage";
+
 export interface UserInfo {
   loggedIn: boolean;
   username: string;
@@ -6,9 +8,24 @@ export interface UserInfo {
 }
 
 function authHeader(token: string): Record<string, string> {
-  return token && token !== "anonymous"
+  // COOKIE_SESSION / "anonymous" / empty → no bearer; rely on the cookie jar.
+  return token && token !== "anonymous" && token !== COOKIE_SESSION
     ? { Authorization: `Bearer ${token}` }
     : {};
+}
+
+// Parse a response as JSON, but fail with a readable message when a proxy
+// returns its own HTML login page instead of Argo CD's JSON. Without this the
+// bare res.json() throws "Unexpected token '<'", surfacing as a "json error".
+async function readJson<T>(res: Response): Promise<T> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.includes("json")) {
+    throw new Error(
+      "Server returned a non-JSON response. Argo CD may be behind a login " +
+        'proxy — try "Sign in via browser".',
+    );
+  }
+  return res.json() as Promise<T>;
 }
 
 export async function getUserInfo(
@@ -105,7 +122,24 @@ export async function fetchAuthSettings(
     headers: { "Content-Type": "application/json" },
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json() as Promise<AuthSettings>;
+  return readJson<AuthSettings>(res);
+}
+
+// Log out of the Argo CD session. The server responds with a Set-Cookie that
+// overwrites argocd.token with an empty value, which the native cookie jar
+// applies — the only way to invalidate the HttpOnly cookie captured during a
+// browser login, since JS can neither read nor clear it. After this, requests
+// carry an empty token and the server treats them as unauthenticated.
+export async function logout(serverUrl: string): Promise<void> {
+  // Best-effort server-side logout. NOTE: this alone does not end a browser
+  // (cookie) session — Argo CD clears the cookie with an empty value and no
+  // Max-Age, which iOS's cookie jar ignores, so the HttpOnly argocd.token
+  // survives. Fully clearing it requires a native cookie API (not available
+  // in Expo Go); see the logout flow in the caller.
+  await fetch(`${serverUrl}/api/v1/session`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  }).catch(() => {});
 }
 
 export async function loginWithPassword(
@@ -122,7 +156,7 @@ export async function loginWithPassword(
     const body = (await res.json().catch(() => ({}))) as Record<string, string>;
     throw new Error(body.message ?? body.error ?? `HTTP ${res.status}`);
   }
-  const data = (await res.json()) as { token: string };
+  const data = await readJson<{ token: string }>(res);
   return data.token;
 }
 

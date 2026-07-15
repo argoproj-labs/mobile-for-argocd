@@ -727,6 +727,17 @@ export default function LoginScreen() {
     }
   }, [oidcConfig, discovery, loginState, redirectUri, router]);
 
+  const handleBrowserLogin = useCallback(() => {
+    if (!serverUrl) {
+      setShowServerModal(true);
+      return;
+    }
+    router.push({
+      pathname: "/webview-login",
+      params: { server: serverUrl },
+    });
+  }, [serverUrl, router]);
+
   const handleAnonymous = useCallback(async () => {
     if (!serverUrl) {
       setShowServerModal(true);
@@ -924,8 +935,15 @@ export default function LoginScreen() {
               >
                 <Text style={styles.footerLink}>Continue anonymously</Text>
               </TouchableOpacity>
-              <TouchableOpacity activeOpacity={0.6}>
-                <Text style={styles.footerLink}>Need help?</Text>
+              {/* Browser login — fallback for proxies / custom login pages
+                  the native flows can't reach. */}
+              <TouchableOpacity
+                testID="btn-browser-login"
+                onPress={handleBrowserLogin}
+                disabled={isLoading}
+                activeOpacity={0.6}
+              >
+                <Text style={styles.footerLink}>Sign in via browser</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1214,7 +1232,8 @@ const styles = StyleSheet.create({
   // Footer
   footer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 20,
     marginTop: 14,
     paddingHorizontal: 4,
   },
