@@ -21,7 +21,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "io.akuity.argocd.mobile"
+      "package": "io.argoprojlabs.argocd.mobile"
     },
     "web": {
       "favicon": "./assets/favicon.png"
