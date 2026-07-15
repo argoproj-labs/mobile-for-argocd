@@ -19,6 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 import { colors } from "../../../lib/theme";
 import { useArgoClient } from "../../../lib/client";
+import { logout } from "../../../lib/api";
 import { tokenStorage } from "../../../lib/storage";
 
 const MONO = Platform.OS === "ios" ? "Menlo" : "monospace";
@@ -66,6 +67,9 @@ export default function UserScreen() {
         text: "Log out",
         style: "destructive",
         onPress: async () => {
+          // Expire the server session cookie before dropping local state, so a
+          // browser-login (cookie) session doesn't silently persist in the jar.
+          await logout(client.serverUrl);
           await tokenStorage.clear();
           queryClient.clear();
           router.replace("/login");

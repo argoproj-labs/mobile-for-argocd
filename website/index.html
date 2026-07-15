@@ -284,13 +284,26 @@
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">// SSO Setup</span>
-      <h2>Using SSO? One server-side step.</h2>
-      <p>The app authenticates via OIDC/PKCE — your identity provider, your tokens, nothing in the middle. Depending on how your Argo CD is configured, you may need to register one redirect URI.</p>
+      <h2>Using SSO?</h2>
+      <p>The quickest path needs <strong>no server-side setup at all</strong> — just tap <strong>Sign in via browser</strong>. The native OIDC/PKCE options below are optional and only need a one-time redirect-URI registration.</p>
     </div>
 
     <div class="faq-list">
 
       <details class="faq-item" open>
+        <summary>
+          <span>Easiest: Sign in via browser — no server setup</span>
+          <span class="faq-toggle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="faq-body">
+          <p>On the login screen, tap <strong>Sign in via browser</strong>. The app opens your Argo CD login page in an in-app browser, so you sign in exactly the way you already do on the web — Dex, an external OIDC provider, or a custom login page.</p>
+          <p><strong>Works behind an authentication proxy.</strong> If your Argo CD sits behind a proxy or gateway that intercepts requests and redirects to its own login page — for example oauth2-proxy, an Envoy/Ingress auth gateway, or a corporate SSO portal — the in-app browser completes that flow and carries the session through to the API. This is the only sign-in option that works in that setup; the native SSO and username/password flows can't get past the proxy.</p>
+          <p>It also works with <strong>no changes to your Argo CD</strong>: no redirect URI to register, no <code>cliClientID</code> to set. If it can log in from a browser, it works here.</p>
+          <p>The dedicated <strong>SSO Login</strong> button uses a native OIDC/PKCE flow instead — slightly smoother, but it requires the one-time redirect-URI setup described below.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
         <summary>
           <span>Dex (built-in): register the mobile redirect URI</span>
           <span class="faq-toggle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
