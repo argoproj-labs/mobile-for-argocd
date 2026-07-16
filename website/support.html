@@ -26,7 +26,7 @@
     <nav class="nav">
       <a href="index.html#features">Features</a>
       <a href="index.html#open-source">Open Source</a>
-      <a href="index.html#sso">SSO Setup</a>
+      <a href="support.html#sso">SSO Setup</a>
       <a href="support.html" class="active">Support</a>
       <a href="privacy.html">Privacy</a>
     </nav>
@@ -46,7 +46,7 @@
   <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile menu">
     <a href="index.html#features">Features</a>
     <a href="index.html#open-source">Open Source</a>
-    <a href="index.html#sso">SSO Setup</a>
+    <a href="support.html#sso">SSO Setup</a>
     <a href="support.html" class="active">Support</a>
     <a href="privacy.html">Privacy</a>
   </nav>
@@ -128,6 +128,52 @@
         </div>
       </details>
 
+                  <details class="faq-item" id="sso" open>
+        <summary>
+          <span>How do I sign in with SSO?</span>
+          <span class="faq-toggle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="faq-body">
+          <p><strong>Sign in via browser (easiest).</strong> On the login screen, tap <strong>Sign in via browser</strong>. The app opens your Argo CD login page in an in-app browser, so you sign in exactly the way you do on the web — Dex, an external OIDC provider, or a custom login page. This needs <strong>no server-side setup</strong>: no redirect URI to register, no <code>cliClientID</code> to set.</p>
+          <p>The dedicated <strong>SSO Login</strong> button uses a native OIDC/PKCE flow instead — slightly smoother, but it requires a one-time redirect-URI registration, depending on how Argo CD authenticates:</p>
+          <p><strong>Dex (built-in).</strong> Argo CD hardcodes the <code>argo-cd-cli</code> Dex static client with only <code>http://localhost</code> redirect URIs. This list is regenerated on every Dex restart and cannot be overridden via <code>argocd-cm</code>. The patch below wraps the Dex container command with a background watcher that re-injects <code>argocd://auth/callback</code> every time Argo CD regenerates the config:</p>
+<pre class="code-block"><code>kubectl patch deployment argocd-dex-server -n &lt;argocd-namespace&gt; --type=strategic -p '{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [{
+          "name": "dex",
+          "command": [
+            "/bin/sh", "-c",
+            "(LAST=\"\"; while true; do M=$(stat -c %Y /tmp/dex.yaml 2>/dev/null); if [ \"$M\" != \"$LAST\" ]; then LAST=$M; grep -q \"argocd://auth/callback\" /tmp/dex.yaml 2>/dev/null || sed -i \"s|  - http://localhost:8085/auth/callback|  - http://localhost:8085/auth/callback\\n  - argocd://auth/callback|\" /tmp/dex.yaml; fi; sleep 0.2; done) &amp; exec /shared/argocd-dex rundex"
+          ]
+        }]
+      }
+    }
+  }
+}'</code></pre>
+          <p><code>exec</code> keeps <code>argocd-dex rundex</code> as PID 1 so it receives Kubernetes signals correctly. The patcher runs in the background and wins the race against Dex startup because it watches for file modification and reacts in under 200 ms.</p>
+        
+          <p><strong>External OIDC provider.</strong> If you use an external OIDC provider configured via <code>oidcConfig</code> in <code>argocd-cm</code>, two changes are needed:</p>
+          <ol>
+            <li>Add <code>argocd://auth/callback</code> to the allowed redirect URIs in your provider's application settings.</li>
+            <li>Set <code>cliClientID</code> in <code>argocd-cm</code> to the client ID that has this redirect URI registered.</li>
+          </ol>
+          <p>No changes to the Dex deployment are required in this configuration.</p>
+        </div>
+      </details>
+
+      <details class="faq-item" id="proxy">
+        <summary>
+          <span>My Argo CD is behind an authentication proxy — can I still sign in?</span>
+          <span class="faq-toggle" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg></span>
+        </summary>
+        <div class="faq-body">
+          <p>Yes — tap <strong>Sign in via browser</strong> on the login screen. If your Argo CD sits behind a proxy or gateway that intercepts requests and redirects to its own login page — for example oauth2-proxy, an Envoy/Ingress auth gateway, or a corporate SSO portal — the in-app browser completes that flow and carries the session through to the API.</p>
+          <p>This is the only sign-in option that works in that setup: the native <strong>SSO Login</strong> and username/password flows never reach Argo CD's own login, so they can't get past the proxy. No changes to your Argo CD are needed.</p>
+        </div>
+      </details>
+
       <details class="faq-item">
         <summary>
           <span>Which Argo CD versions are supported?</span>
@@ -194,7 +240,7 @@
       </div>
       <div class="footer-col">
         <h4>Resources</h4>
-        <a href="index.html#sso">SSO Setup</a>
+        <a href="support.html#sso">SSO Setup</a>
         <a href="support.html">Support</a>
         <a href="https://github.com/argoproj-labs/mobile-for-argocd/issues" target="_blank" rel="noopener">Report an issue</a>
         <a href="https://github.com/argoproj-labs/mobile-for-argocd/discussions" target="_blank" rel="noopener">Discussions</a>

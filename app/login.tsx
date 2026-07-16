@@ -383,6 +383,8 @@ function EyeToggle({ open, onPress }: { open: boolean; onPress: () => void }) {
 }
 
 const DEMO_SERVER = "https://cd.apps.argoproj.io";
+const SUPPORT_URL =
+  "https://argoproj-labs.github.io/mobile-for-argocd/support.html";
 
 // ── Server URL modal ───────────────────────────────────────────
 function ServerModal({
@@ -927,6 +929,19 @@ export default function LoginScreen() {
               </View>
             )}
 
+            {/* Browser login — fallback for proxies / custom login pages
+                the native flows can't reach. */}
+            <TouchableOpacity
+              testID="btn-browser-login"
+              onPress={handleBrowserLogin}
+              disabled={isLoading}
+              style={[styles.btnBrowser, isLoading && { opacity: 0.6 }]}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="globe-outline" size={18} color={colors.text} />
+              <Text style={styles.btnBrowserText}>Sign in via browser</Text>
+            </TouchableOpacity>
+
             <View style={styles.footer}>
               <TouchableOpacity
                 testID="btn-anonymous"
@@ -935,15 +950,11 @@ export default function LoginScreen() {
               >
                 <Text style={styles.footerLink}>Continue anonymously</Text>
               </TouchableOpacity>
-              {/* Browser login — fallback for proxies / custom login pages
-                  the native flows can't reach. */}
               <TouchableOpacity
-                testID="btn-browser-login"
-                onPress={handleBrowserLogin}
-                disabled={isLoading}
                 activeOpacity={0.6}
+                onPress={() => WebBrowser.openBrowserAsync(SUPPORT_URL)}
               >
-                <Text style={styles.footerLink}>Sign in via browser</Text>
+                <Text style={styles.footerLink}>Need help?</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1180,6 +1191,24 @@ const styles = StyleSheet.create({
     color: colors.text,
     letterSpacing: -0.2,
   },
+  btnBrowser: {
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 4,
+  },
+  btnBrowserText: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: colors.text,
+    letterSpacing: -0.2,
+  },
   btnPrimary: {
     height: 54,
     borderRadius: 16,
@@ -1232,8 +1261,7 @@ const styles = StyleSheet.create({
   // Footer
   footer: {
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 20,
+    justifyContent: "space-between",
     marginTop: 14,
     paddingHorizontal: 4,
   },
