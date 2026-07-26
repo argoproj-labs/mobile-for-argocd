@@ -4,7 +4,7 @@ A native iOS and Android app for monitoring and managing [Argo CD](https://argo-
 
 <img src="docs/screenshot.png" width="320" alt="Apps list" />
 
-[Download on the App Store](https://apps.apple.com/app/id6766354032) · [Get it on Google Play](https://play.google.com/store/apps/details?id=io.akuity.argocd.mobile)
+[Download on the App Store](https://apps.apple.com/app/id6766354032) · [Get it on Google Play](https://play.google.com/store/apps/details?id=io.argoprojlabs.argocd.mobile)
 
 ## Features
 
