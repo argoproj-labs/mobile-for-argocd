@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo } from "react";
 import { useRouter } from "expo-router";
 import {
   deleteResource,
@@ -27,7 +27,7 @@ import {
   type SyncApplicationOptions,
   type UserInfo,
 } from "./api";
-import { serverStorage, tokenStorage } from "./storage";
+import { useInstanceStore } from "./instanceStore";
 
 export class ArgoClient {
   constructor(
@@ -399,19 +399,25 @@ export function ArgoClientProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [client, setClient] = useState<ArgoClient | null>(null);
+  const { activeSession, isLoaded } = useInstanceStore();
 
+  // A server that has been added but never signed in to has no session, so
+  // it routes to login rather than rendering the app against a blank token.
   useEffect(() => {
-    Promise.all([tokenStorage.get(), serverStorage.get()]).then(
-      ([token, server]) => {
-        if (token === null || !server) {
-          router.replace("/login");
-        } else {
-          setClient(new ArgoClient(server, token));
-        }
-      },
-    );
-  }, [router]);
+    if (!isLoaded) return;
+    if (!activeSession) {
+      router.replace("/login");
+    }
+  }, [isLoaded, activeSession, router]);
+
+  const client = useMemo(
+    () =>
+      activeSession
+        ? new ArgoClient(activeSession.url, activeSession.token)
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeSession?.url, activeSession?.token],
+  );
 
   if (!client) return null;
 

@@ -15,12 +15,14 @@ import { WebView, type WebViewNavigation } from "react-native-webview";
 
 import { colors } from "../lib/theme";
 import { getUserInfo, hostFromUrl } from "../lib/api";
-import { COOKIE_SESSION, tokenStorage } from "../lib/storage";
+import { COOKIE_SESSION } from "../lib/storage";
+import { useInstanceStore } from "../lib/instanceStore";
 
 export default function WebViewLogin() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { server } = useLocalSearchParams<{ server: string }>();
+  const { upsertInstance } = useInstanceStore();
 
   const [loading, setLoading] = useState(true);
   const [checking, setChecking] = useState(false);
@@ -40,7 +42,7 @@ export default function WebViewLogin() {
         const info = await getUserInfo(server, "");
         if (info?.loggedIn) {
           done.current = true;
-          await tokenStorage.set(COOKIE_SESSION);
+          if (server) await upsertInstance(server, COOKIE_SESSION);
           router.replace("/(app)/");
           return;
         }
@@ -57,7 +59,7 @@ export default function WebViewLogin() {
         if (manual) setChecking(false);
       }
     },
-    [server, router],
+    [server, router, upsertInstance],
   );
 
   const onNavChange = useCallback(
@@ -75,6 +77,11 @@ export default function WebViewLogin() {
       </View>
     );
   }
+
+  // Go straight to the login page. The root path can't be relied on to
+  // redirect there — behind a proxy, or with a custom index, it may serve
+  // something else entirely. `server` stays the API base for the probe.
+  const loginUrl = `${server.replace(/\/+$/, "")}/login`;
 
   return (
     <View style={styles.root}>
@@ -119,7 +126,7 @@ export default function WebViewLogin() {
       )}
 
       <WebView
-        source={{ uri: server }}
+        source={{ uri: loginUrl }}
         style={styles.webview}
         sharedCookiesEnabled
         thirdPartyCookiesEnabled
