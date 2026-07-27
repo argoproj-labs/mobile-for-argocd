@@ -25,8 +25,10 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../../../lib/theme";
 import { appKey, appSource, type Application } from "../../../lib/api";
-import { favoritesStorage } from "../../../lib/storage";
+import { instanceFavoritesStorage, type Instance } from "../../../lib/storage";
 import { useArgoClient } from "../../../lib/client";
+import { useInstanceStore } from "../../../lib/instanceStore";
+import { ServerSheet } from "../../../components/server-sheet";
 import { getHealth, getSync, healthSeverity } from "../../../lib/status";
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -662,6 +664,7 @@ export default function AppsScreen() {
   const insets = useSafeAreaInsets();
   const client = useArgoClient();
   const queryClient = useQueryClient();
+  const { activeId, switchInstance } = useInstanceStore();
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -674,13 +677,19 @@ export default function AppsScreen() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [showSort, setShowSort] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load favorites on mount; abort watch on unmount
+  // Load per-instance favorites when active instance changes
   useEffect(() => {
-    favoritesStorage.get().then(setFavorites);
+    if (!activeId) return;
+    instanceFavoritesStorage.get(activeId).then(setFavorites);
+  }, [activeId]);
+
+  // Abort watch on unmount
+  useEffect(() => {
     return () => {
       abortRef.current?.abort();
     };
@@ -752,19 +761,35 @@ export default function AppsScreen() {
     };
   }, [data?.resourceVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Switching servers invalidates every cached response. A server with no
+  // session just becomes active — ArgoClientProvider then routes to login.
+  const handleSelectServer = useCallback(
+    (inst: Instance) => {
+      setShowSwitcher(false);
+      if (inst.id === activeId) return;
+      queryClient.clear();
+      void switchInstance(inst.id);
+    },
+    [activeId, queryClient, switchInstance],
+  );
+
   // Favorites toggle
-  const toggleFav = useCallback((key: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      favoritesStorage.set(next);
-      return next;
-    });
-  }, []);
+  const toggleFav = useCallback(
+    (key: string) => {
+      if (!activeId) return;
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        instanceFavoritesStorage.set(activeId, next);
+        return next;
+      });
+    },
+    [activeId],
+  );
 
   // Health/sync counts (for bar + chips + filter badges)
   const healthCounts = useMemo(() => {
@@ -968,11 +993,16 @@ export default function AppsScreen() {
       <View style={[styles.header, { paddingTop: insets.top }]}>
         {/* Nav row */}
         <View style={styles.navRow}>
-          <View style={styles.serverBtn}>
+          <TouchableOpacity
+            style={styles.serverBtn}
+            onPress={() => setShowSwitcher(true)}
+            activeOpacity={0.7}
+          >
             <Text style={styles.serverName} numberOfLines={1}>
               {serverName}
             </Text>
-          </View>
+            <Ionicons name="chevron-down" size={14} color={colors.orange} />
+          </TouchableOpacity>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.iconBtn}
@@ -1305,6 +1335,7 @@ export default function AppsScreen() {
     [
       insets.top,
       serverName,
+      setShowSwitcher,
       apps.length,
       isLoading,
       healthCounts,
@@ -1396,6 +1427,13 @@ export default function AppsScreen() {
         onClose={() => setShowSort(false)}
         sortKey={sortKey}
         setSortKey={setSortKey}
+      />
+
+      <ServerSheet
+        visible={showSwitcher}
+        onClose={() => setShowSwitcher(false)}
+        onSelect={handleSelectServer}
+        subtitle="Switch between your Argo CD instances"
       />
     </View>
   );

@@ -9,7 +9,6 @@ import {
   Animated,
   Image,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -38,12 +37,13 @@ import {
   fetchAuthSettings,
   hostFromUrl,
   loginWithPassword,
-  normalizeUrl,
   resolveOidcConfig,
   type AuthSettings,
   type OidcFlowConfig,
 } from "../lib/api";
-import { serverStorage, tokenStorage } from "../lib/storage";
+import { type Instance } from "../lib/storage";
+import { useInstanceStore } from "../lib/instanceStore";
+import { ServerSheet } from "../components/server-sheet";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -382,183 +382,8 @@ function EyeToggle({ open, onPress }: { open: boolean; onPress: () => void }) {
   );
 }
 
-const DEMO_SERVER = "https://cd.apps.argoproj.io";
 const SUPPORT_URL =
   "https://argoproj-labs.github.io/mobile-for-argocd/support.html";
-
-// ── Server URL modal ───────────────────────────────────────────
-function ServerModal({
-  visible,
-  initialValue,
-  onSave,
-  onCancel,
-}: {
-  visible: boolean;
-  initialValue: string;
-  onSave: (url: string) => void;
-  onCancel: () => void;
-}) {
-  const [input, setInput] = useState(initialValue);
-  const [validating, setValidating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (visible) {
-      setInput(initialValue);
-      setError(null);
-    }
-  }, [visible, initialValue]);
-
-  const handleSave = useCallback(async () => {
-    const url = normalizeUrl(input);
-    if (!url) return;
-
-    try {
-      const parsed = new URL(url);
-      if (!parsed.hostname) throw new Error();
-    } catch {
-      setError("Enter a valid URL, e.g. https://argocd.example.com");
-      return;
-    }
-
-    setValidating(true);
-    setError(null);
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
-      await fetch(`${url}/api/version`, { signal: controller.signal });
-      clearTimeout(timeout);
-    } catch (e: unknown) {
-      setValidating(false);
-      if (e instanceof Error && e.name === "AbortError") {
-        setError("Connection timed out. Check the URL and your network.");
-      } else {
-        setError("Could not reach the server. Check the URL and your network.");
-      }
-      return;
-    }
-    setValidating(false);
-    onSave(url);
-  }, [input, onSave]);
-
-  const handleDemo = useCallback(() => {
-    setInput(DEMO_SERVER);
-    setError(null);
-  }, []);
-
-  const canSave = !!input.trim() && !validating;
-
-  return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onCancel}
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.modalOverlay}
-      >
-        <TouchableOpacity
-          style={StyleSheet.absoluteFillObject}
-          onPress={onCancel}
-          activeOpacity={1}
-        />
-        <View
-          style={[styles.modalSheet, { paddingBottom: insets.bottom + 24 }]}
-        >
-          <View style={styles.modalHandle} />
-          <Text style={styles.modalTitle}>Server URL</Text>
-          <Text style={styles.modalHint}>
-            Enter the URL of your Argo CD instance
-          </Text>
-          <View
-            style={[
-              styles.field,
-              {
-                borderColor: error ? "rgba(255,107,107,0.5)" : colors.hairline,
-                marginTop: 20,
-              },
-            ]}
-          >
-            <Text
-              style={[
-                styles.fieldLabel,
-                { color: error ? colors.danger : colors.faint },
-              ]}
-            >
-              URL
-            </Text>
-            <View style={styles.fieldRow}>
-              <TextInput
-                style={styles.fieldInput}
-                value={input}
-                onChangeText={(t) => {
-                  setInput(t);
-                  setError(null);
-                }}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="url"
-                keyboardType="url"
-                keyboardAppearance="dark"
-                placeholder="https://argocd.example.com"
-                placeholderTextColor={colors.faint}
-                returnKeyType="done"
-                onSubmitEditing={handleSave}
-                autoFocus
-              />
-            </View>
-          </View>
-
-          {error ? (
-            <View style={styles.modalError}>
-              <Ionicons name="alert-circle" size={14} color={colors.danger} />
-              <Text style={styles.modalErrorText}>{error}</Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={handleDemo}
-              style={styles.demoBtn}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="flask-outline" size={14} color={colors.orange} />
-              <Text style={styles.demoBtnText}>Try public demo server</Text>
-            </TouchableOpacity>
-          )}
-
-          <View style={styles.modalButtons}>
-            <TouchableOpacity
-              onPress={onCancel}
-              style={[styles.btn, styles.btnGhost]}
-              disabled={validating}
-            >
-              <Text style={[styles.btnText, { color: colors.muted }]}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={handleSave}
-              style={[
-                styles.btn,
-                styles.btnPrimary,
-                !canSave && styles.btnPrimaryDisabled,
-              ]}
-              disabled={!canSave}
-            >
-              {validating ? (
-                <View style={styles.spinner} />
-              ) : (
-                <Text style={styles.btnText}>Save</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      </KeyboardAvoidingView>
-    </Modal>
-  );
-}
 
 // ── Login screen ───────────────────────────────────────────────
 type LoginState =
@@ -572,8 +397,19 @@ type LoginState =
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const {
+    activeInstance,
+    instances,
+    isLoaded,
+    upsertInstance,
+    switchInstance,
+  } = useInstanceStore();
 
-  const [serverUrl, setServerUrl] = useState<string | null>(null);
+  // The selected server is whatever the store says is active — deriving it
+  // instead of mirroring it in state is what keeps the chip, the sheet, and
+  // the login request from drifting apart.
+  const serverUrl = activeInstance?.url ?? null;
+
   const [authSettings, setAuthSettings] = useState<AuthSettings | null>(null);
   const [loginState, setLoginState] = useState<LoginState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -583,35 +419,48 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [focused, setFocused] = useState<"username" | "password" | null>(null);
 
-  const [showServerModal, setShowServerModal] = useState(false);
-  const [settingsRefreshKey, setSettingsRefreshKey] = useState(0);
+  const [showServerSheet, setShowServerSheet] = useState(false);
 
-  // Load saved server URL on mount
-  useEffect(() => {
-    serverStorage.get().then((url) => {
-      if (url) {
-        setServerUrl(url);
-      } else {
-        setShowServerModal(true);
-      }
-    });
-  }, []);
+  // Signing in is impossible without a server, so the sheet opens itself and
+  // can't be dismissed until one is chosen.
+  const needsServer = isLoaded && !serverUrl;
 
-  // Fetch auth settings when server URL changes or is re-saved
   useEffect(() => {
+    if (needsServer) setShowServerSheet(true);
+  }, [needsServer]);
+
+  // Credentials belong to one server; drop them when the selection changes.
+  useEffect(() => {
+    setUsername("");
+    setPassword("");
+  }, [serverUrl]);
+
+  // Fetch auth settings for the selected server. Switching servers leaves the
+  // previous request in flight, so responses are dropped once they are stale —
+  // otherwise a slow answer from the old server overwrites the new one's.
+  useEffect(() => {
+    setAuthSettings(null);
     if (!serverUrl) return;
+
+    let cancelled = false;
     setLoginState("loading-settings");
     fetchAuthSettings(serverUrl)
       .then((settings) => {
+        if (cancelled) return;
         setAuthSettings(settings);
         setLoginState("idle");
       })
       .catch(() => {
+        if (cancelled) return;
         // Fall back to username/password login if settings can't be fetched
         setAuthSettings({ userLoginsDisabled: false });
         setLoginState("idle");
       });
-  }, [serverUrl, settingsRefreshKey]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [serverUrl]);
 
   // ── OIDC / SSO ──────────────────────────────────────────────
   const oidcConfig: OidcFlowConfig | null = useMemo(
@@ -678,7 +527,7 @@ export default function LoginScreen() {
         username.trim(),
         password,
       );
-      await tokenStorage.set(token);
+      await upsertInstance(serverUrl, token);
       setLoginState("success");
       setTimeout(() => router.replace("/(app)/"), 900);
     } catch (e: unknown) {
@@ -687,7 +536,7 @@ export default function LoginScreen() {
       setLoginState("error");
       setTimeout(() => setLoginState("idle"), 2400);
     }
-  }, [canSubmit, serverUrl, username, password, router]);
+  }, [canSubmit, serverUrl, username, password, router, upsertInstance]);
 
   const handleSSO = useCallback(async () => {
     if (!oidcConfig || !discovery || loginState !== "idle") return;
@@ -715,7 +564,7 @@ export default function LoginScreen() {
         );
         const token = tokenResponse.idToken;
         if (!token) throw new Error("No id_token in token response");
-        await tokenStorage.set(token);
+        if (serverUrl) await upsertInstance(serverUrl, token);
         setLoginState("success");
         setTimeout(() => router.replace("/(app)/"), 900);
       } else {
@@ -727,11 +576,19 @@ export default function LoginScreen() {
       setLoginState("error");
       setTimeout(() => setLoginState("idle"), 2400);
     }
-  }, [oidcConfig, discovery, loginState, redirectUri, router]);
+  }, [
+    oidcConfig,
+    discovery,
+    loginState,
+    redirectUri,
+    router,
+    serverUrl,
+    upsertInstance,
+  ]);
 
   const handleBrowserLogin = useCallback(() => {
     if (!serverUrl) {
-      setShowServerModal(true);
+      setShowServerSheet(true);
       return;
     }
     router.push({
@@ -742,21 +599,24 @@ export default function LoginScreen() {
 
   const handleAnonymous = useCallback(async () => {
     if (!serverUrl) {
-      setShowServerModal(true);
+      setShowServerSheet(true);
       return;
     }
-    await tokenStorage.set("anonymous");
+    await upsertInstance(serverUrl, "anonymous");
     setLoginState("success");
     setTimeout(() => router.replace("/(app)/"), 900);
-  }, [serverUrl, router]);
+  }, [serverUrl, router, upsertInstance]);
 
-  const handleSaveServer = useCallback((url: string) => {
-    serverStorage.set(url);
-    setServerUrl(url);
-    setAuthSettings(null);
-    setSettingsRefreshKey((k) => k + 1);
-    setShowServerModal(false);
-  }, []);
+  // Only switch the active instance. The derived serverUrl then drives the
+  // refetch — nudging it from here raced the async switch and refetched the
+  // server being navigated away from.
+  const handleSelectServer = useCallback(
+    (inst: Instance) => {
+      setShowServerSheet(false);
+      if (inst.id !== activeInstance?.id) void switchInstance(inst.id);
+    },
+    [activeInstance?.id, switchInstance],
+  );
 
   const isLoading = loginState === "signing-in" || loginState === "sso-pending";
 
@@ -776,7 +636,7 @@ export default function LoginScreen() {
 
       {/* Server chip */}
       <View style={[styles.topBar, { paddingTop: insets.top + 16 }]}>
-        <ServerChip url={serverUrl} onPress={() => setShowServerModal(true)} />
+        <ServerChip url={serverUrl} onPress={() => setShowServerSheet(true)} />
       </View>
 
       {/* Error toast */}
@@ -806,170 +666,204 @@ export default function LoginScreen() {
             <Text style={styles.tagline}>{"Let's get stuff deployed!"}</Text>
           </View>
 
-          {/* Form */}
-          <View style={styles.form}>
-            {/* SSO */}
-            {ssoConfigured && (
-              <TouchableOpacity
-                onPress={handleSSO}
-                disabled={
-                  isLoading || loginState === "loading-settings" || !discovery
-                }
-                style={[
-                  styles.btnSSO,
-                  (isLoading || !discovery) && { opacity: 0.6 },
-                ]}
-                activeOpacity={0.8}
-              >
-                {loginState === "sso-pending" ? (
-                  <View style={styles.spinner} />
-                ) : (
-                  <>
-                    {/* SSO glyph: circle with inner dot */}
-                    <View
-                      style={{
-                        width: 18,
-                        height: 18,
-                        borderRadius: 9,
-                        borderWidth: 2.5,
-                        borderColor: "#fff",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <View
-                        style={{
-                          width: 4,
-                          height: 4,
-                          borderRadius: 2,
-                          backgroundColor: "#fff",
-                        }}
-                      />
-                    </View>
-                    <Text style={styles.btnSSOText}>{ssoLabel}</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            )}
-
-            {/* Or divider */}
-            {ssoConfigured && !authSettings?.userLoginsDisabled && (
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>OR</Text>
-                <View style={styles.dividerLine} />
-              </View>
-            )}
-
-            {/* Username / password */}
-            {!authSettings?.userLoginsDisabled && (
-              <>
-                <Field
-                  label="Username"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoComplete="username"
-                  error={loginState === "error"}
-                  focused={focused === "username"}
-                  onFocus={() => setFocused("username")}
-                  onBlur={() => setFocused(null)}
-                />
-                <Field
-                  label="Password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoComplete="current-password"
-                  error={loginState === "error"}
-                  focused={focused === "password"}
-                  onFocus={() => setFocused("password")}
-                  onBlur={() => setFocused(null)}
-                  trailing={
-                    <EyeToggle
-                      open={showPassword}
-                      onPress={() => setShowPassword((v) => !v)}
-                    />
-                  }
-                />
-                <View style={{ height: 4 }} />
-                <TouchableOpacity
-                  onPress={handleSignIn}
-                  disabled={!canSubmit}
-                  activeOpacity={0.85}
-                >
-                  <LinearGradient
-                    colors={
-                      canSubmit
-                        ? [colors.orange, colors.orangeDeep]
-                        : ["rgba(239,123,77,0.3)", "rgba(229,97,58,0.3)"]
-                    }
-                    style={styles.btnPrimary}
-                    start={{ x: 0.5, y: 0 }}
-                    end={{ x: 0.5, y: 1 }}
-                  >
-                    {loginState === "signing-in" ? (
-                      <View style={styles.spinner} />
-                    ) : (
-                      <>
-                        <Text style={styles.btnText}>Sign in</Text>
-                        <Ionicons name="arrow-forward" size={16} color="#fff" />
-                      </>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {/* Login fully disabled */}
-            {authSettings?.userLoginsDisabled && !ssoConfigured && (
-              <View style={styles.disabledMsg}>
-                <Text style={styles.disabledMsgText}>
-                  Login is disabled. Please contact your system administrator.
+          {/* No server picked yet — the sign-in controls would have nothing to
+              talk to, so prompt for one instead of showing a dead form. */}
+          {needsServer ? (
+            <View style={styles.form}>
+              <View style={styles.needsServerMsg}>
+                <Text style={styles.needsServerText}>
+                  {instances.length > 0
+                    ? "Choose an Argo CD server to sign in to."
+                    : "Add your Argo CD server to get started."}
                 </Text>
               </View>
-            )}
-
-            {/* Browser login — fallback for proxies / custom login pages
-                the native flows can't reach. */}
-            <TouchableOpacity
-              testID="btn-browser-login"
-              onPress={handleBrowserLogin}
-              disabled={isLoading}
-              style={[styles.btnBrowser, isLoading && { opacity: 0.6 }]}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="globe-outline" size={18} color={colors.text} />
-              <Text style={styles.btnBrowserText}>Sign in via browser</Text>
-            </TouchableOpacity>
-
-            <View style={styles.footer}>
               <TouchableOpacity
-                testID="btn-anonymous"
-                onPress={handleAnonymous}
-                activeOpacity={0.6}
+                testID="btn-configure-server"
+                onPress={() => setShowServerSheet(true)}
+                activeOpacity={0.85}
               >
-                <Text style={styles.footerLink}>Continue anonymously</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                activeOpacity={0.6}
-                onPress={() => WebBrowser.openBrowserAsync(SUPPORT_URL)}
-              >
-                <Text style={styles.footerLink}>Need help?</Text>
+                <LinearGradient
+                  colors={[colors.orange, colors.orangeDeep]}
+                  style={styles.btnPrimary}
+                  start={{ x: 0.5, y: 0 }}
+                  end={{ x: 0.5, y: 1 }}
+                >
+                  <Ionicons name="add" size={18} color="#fff" />
+                  <Text style={styles.btnText}>
+                    {instances.length > 0 ? "Choose server" : "Add server"}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
             </View>
-          </View>
+          ) : (
+            /* Form */
+            <View style={styles.form}>
+              {/* SSO */}
+              {ssoConfigured && (
+                <TouchableOpacity
+                  onPress={handleSSO}
+                  disabled={
+                    isLoading || loginState === "loading-settings" || !discovery
+                  }
+                  style={[
+                    styles.btnSSO,
+                    (isLoading || !discovery) && { opacity: 0.6 },
+                  ]}
+                  activeOpacity={0.8}
+                >
+                  {loginState === "sso-pending" ? (
+                    <View style={styles.spinner} />
+                  ) : (
+                    <>
+                      {/* SSO glyph: circle with inner dot */}
+                      <View
+                        style={{
+                          width: 18,
+                          height: 18,
+                          borderRadius: 9,
+                          borderWidth: 2.5,
+                          borderColor: "#fff",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: 4,
+                            height: 4,
+                            borderRadius: 2,
+                            backgroundColor: "#fff",
+                          }}
+                        />
+                      </View>
+                      <Text style={styles.btnSSOText}>{ssoLabel}</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+
+              {/* Or divider */}
+              {ssoConfigured && !authSettings?.userLoginsDisabled && (
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+              )}
+
+              {/* Username / password */}
+              {!authSettings?.userLoginsDisabled && (
+                <>
+                  <Field
+                    label="Username"
+                    value={username}
+                    onChangeText={setUsername}
+                    autoComplete="username"
+                    error={loginState === "error"}
+                    focused={focused === "username"}
+                    onFocus={() => setFocused("username")}
+                    onBlur={() => setFocused(null)}
+                  />
+                  <Field
+                    label="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoComplete="current-password"
+                    error={loginState === "error"}
+                    focused={focused === "password"}
+                    onFocus={() => setFocused("password")}
+                    onBlur={() => setFocused(null)}
+                    trailing={
+                      <EyeToggle
+                        open={showPassword}
+                        onPress={() => setShowPassword((v) => !v)}
+                      />
+                    }
+                  />
+                  <View style={{ height: 4 }} />
+                  <TouchableOpacity
+                    onPress={handleSignIn}
+                    disabled={!canSubmit}
+                    activeOpacity={0.85}
+                  >
+                    <LinearGradient
+                      colors={
+                        canSubmit
+                          ? [colors.orange, colors.orangeDeep]
+                          : ["rgba(239,123,77,0.3)", "rgba(229,97,58,0.3)"]
+                      }
+                      style={styles.btnPrimary}
+                      start={{ x: 0.5, y: 0 }}
+                      end={{ x: 0.5, y: 1 }}
+                    >
+                      {loginState === "signing-in" ? (
+                        <View style={styles.spinner} />
+                      ) : (
+                        <>
+                          <Text style={styles.btnText}>Sign in</Text>
+                          <Ionicons
+                            name="arrow-forward"
+                            size={16}
+                            color="#fff"
+                          />
+                        </>
+                      )}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {/* Login fully disabled */}
+              {authSettings?.userLoginsDisabled && !ssoConfigured && (
+                <View style={styles.disabledMsg}>
+                  <Text style={styles.disabledMsgText}>
+                    Login is disabled. Please contact your system administrator.
+                  </Text>
+                </View>
+              )}
+
+              {/* Browser login — fallback for proxies / custom login pages
+                the native flows can't reach. */}
+              <TouchableOpacity
+                testID="btn-browser-login"
+                onPress={handleBrowserLogin}
+                disabled={isLoading}
+                style={[styles.btnBrowser, isLoading && { opacity: 0.6 }]}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="globe-outline" size={18} color={colors.text} />
+                <Text style={styles.btnBrowserText}>Sign in via browser</Text>
+              </TouchableOpacity>
+
+              <View style={styles.footer}>
+                <TouchableOpacity
+                  testID="btn-anonymous"
+                  onPress={handleAnonymous}
+                  activeOpacity={0.6}
+                >
+                  <Text style={styles.footerLink}>Continue anonymously</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={() => WebBrowser.openBrowserAsync(SUPPORT_URL)}
+                >
+                  <Text style={styles.footerLink}>Need help?</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
       {/* Overlays */}
       <SuccessOverlay visible={loginState === "success"} />
-      <ServerModal
-        visible={showServerModal}
-        initialValue={serverUrl ?? ""}
-        onSave={handleSaveServer}
-        onCancel={() => {
-          if (serverUrl) setShowServerModal(false);
-        }}
+      <ServerSheet
+        visible={showServerSheet}
+        onClose={() => setShowServerSheet(false)}
+        onSelect={handleSelectServer}
+        subtitle="Choose which Argo CD instance to sign in to"
+        dismissible={!needsServer}
       />
     </View>
   );
@@ -1285,6 +1179,19 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
   },
+  needsServerMsg: {
+    padding: 16,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: colors.hairline,
+  },
+  needsServerText: {
+    fontSize: 14,
+    color: colors.text,
+    textAlign: "center",
+    lineHeight: 20,
+  },
 
   // Server modal
   modalOverlay: {
@@ -1350,6 +1257,60 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginTop: 16,
+  },
+
+  // Server picker
+  pickerCard: {
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    overflow: "hidden",
+  },
+  pickerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  pickerRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
+  },
+  pickerRowMain: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  pickerHostname: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+    fontWeight: "500",
+    letterSpacing: -0.2,
+  },
+  pickerHostnameActive: {
+    color: colors.orange,
+  },
+  pickerAddBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+  },
+  pickerAddBtnText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: colors.orange,
+  },
+  pickerEditBtnText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: colors.muted,
   },
 
   // Spinner
