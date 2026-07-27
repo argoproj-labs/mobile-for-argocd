@@ -8,6 +8,7 @@ import React, {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Modal,
   Platform,
@@ -25,8 +26,9 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../../../lib/theme";
 import { appKey, appSource, type Application } from "../../../lib/api";
-import { favoritesStorage } from "../../../lib/storage";
+import { instanceFavoritesStorage } from "../../../lib/storage";
 import { useArgoClient } from "../../../lib/client";
+import { useInstanceStore } from "../../../lib/instanceStore";
 import { getHealth, getSync, healthSeverity } from "../../../lib/status";
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -543,6 +545,237 @@ function BottomSheet({
   );
 }
 
+// ── Instance switcher sheet ────────────────────────────────────
+function InstanceSwitcherSheet({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { instances, activeId, switchInstance, removeInstance } =
+    useInstanceStore();
+  const queryClient = useQueryClient();
+
+  const handleSwitch = async (id: string) => {
+    if (id !== activeId) {
+      queryClient.clear();
+      await switchInstance(id);
+    }
+    onClose();
+  };
+
+  const handleRemove = (id: string) => {
+    Alert.alert("Remove server", "Remove this Argo CD instance?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          if (id === activeId) queryClient.clear();
+          await removeInstance(id);
+          onClose();
+        },
+      },
+    ]);
+  };
+
+  const handleAddServer = () => {
+    onClose();
+    router.push({ pathname: "/login", params: { addNew: "1" } });
+  };
+
+  const sheetHeight = Math.min(Math.max(instances.length * 62 + 180, 220), 520);
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={ss.overlay}>
+        <TouchableOpacity
+          style={StyleSheet.absoluteFillObject}
+          onPress={onClose}
+          activeOpacity={1}
+        />
+        <View
+          style={[ss.sheet, { height: sheetHeight, paddingBottom: insets.bottom + 16 }]}
+        >
+          <View style={ss.handle} />
+          <View style={ss.header}>
+            <View style={{ width: 60 }} />
+            <Text style={ss.title}>Servers</Text>
+            <TouchableOpacity
+              onPress={onClose}
+              style={{ width: 60, alignItems: "flex-end" }}
+            >
+              <Text style={ss.done}>Done</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+          >
+            <View style={ss.card}>
+              {instances.map((inst, i) => {
+                let hostname = inst.url;
+                try {
+                  hostname = new URL(inst.url).hostname;
+                } catch {}
+                const isActive = inst.id === activeId;
+                return (
+                  <View
+                    key={inst.id}
+                    style={[ss.row, i < instances.length - 1 && ss.rowBorder]}
+                  >
+                    <TouchableOpacity
+                      style={ss.rowMain}
+                      onPress={() => void handleSwitch(inst.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={isActive ? "checkmark-circle" : "ellipse-outline"}
+                        size={20}
+                        color={isActive ? colors.orange : colors.muted}
+                      />
+                      <Text
+                        style={[ss.hostname, isActive && ss.hostnameActive]}
+                        numberOfLines={1}
+                      >
+                        {hostname}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => handleRemove(inst.id)}
+                      hitSlop={12}
+                    >
+                      <Ionicons
+                        name="close-circle-outline"
+                        size={20}
+                        color={colors.muted}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+
+            <TouchableOpacity
+              style={ss.addBtn}
+              onPress={handleAddServer}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="add-circle-outline"
+                size={18}
+                color={colors.orange}
+              />
+              <Text style={ss.addBtnText}>Add server</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const ss = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    justifyContent: "flex-end",
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  sheet: {
+    backgroundColor: "#171B33",
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    borderBottomWidth: 0,
+  },
+  handle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.hairlineHi,
+    alignSelf: "center",
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text,
+    letterSpacing: -0.2,
+  },
+  done: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: colors.orange,
+  },
+  card: {
+    backgroundColor: "#1C2140",
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: colors.hairline,
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    gap: 10,
+  },
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.hairline,
+  },
+  rowMain: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  hostname: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.text,
+    fontWeight: "500",
+    letterSpacing: -0.2,
+  },
+  hostnameActive: {
+    color: colors.orange,
+  },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  addBtnText: {
+    fontSize: 15,
+    fontWeight: "500",
+    color: colors.orange,
+  },
+});
+
 // ── Sort sheet ─────────────────────────────────────────────────
 type SortKey = "name" | "lastSync" | "health" | "project";
 
@@ -662,6 +895,7 @@ export default function AppsScreen() {
   const insets = useSafeAreaInsets();
   const client = useArgoClient();
   const queryClient = useQueryClient();
+  const { activeId } = useInstanceStore();
 
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
@@ -674,13 +908,19 @@ export default function AppsScreen() {
   const [openGroup, setOpenGroup] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>("name");
   const [showSort, setShowSort] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // Load favorites on mount; abort watch on unmount
+  // Load per-instance favorites when active instance changes
   useEffect(() => {
-    favoritesStorage.get().then(setFavorites);
+    if (!activeId) return;
+    instanceFavoritesStorage.get(activeId).then(setFavorites);
+  }, [activeId]);
+
+  // Abort watch on unmount
+  useEffect(() => {
     return () => {
       abortRef.current?.abort();
     };
@@ -753,18 +993,22 @@ export default function AppsScreen() {
   }, [data?.resourceVersion]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Favorites toggle
-  const toggleFav = useCallback((key: string) => {
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) {
-        next.delete(key);
-      } else {
-        next.add(key);
-      }
-      favoritesStorage.set(next);
-      return next;
-    });
-  }, []);
+  const toggleFav = useCallback(
+    (key: string) => {
+      if (!activeId) return;
+      setFavorites((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        instanceFavoritesStorage.set(activeId, next);
+        return next;
+      });
+    },
+    [activeId],
+  );
 
   // Health/sync counts (for bar + chips + filter badges)
   const healthCounts = useMemo(() => {
@@ -968,11 +1212,16 @@ export default function AppsScreen() {
       <View style={[styles.header, { paddingTop: insets.top }]}>
         {/* Nav row */}
         <View style={styles.navRow}>
-          <View style={styles.serverBtn}>
+          <TouchableOpacity
+            style={styles.serverBtn}
+            onPress={() => setShowSwitcher(true)}
+            activeOpacity={0.7}
+          >
             <Text style={styles.serverName} numberOfLines={1}>
               {serverName}
             </Text>
-          </View>
+            <Ionicons name="chevron-down" size={14} color={colors.orange} />
+          </TouchableOpacity>
           <View style={styles.headerActions}>
             <TouchableOpacity
               style={styles.iconBtn}
@@ -1305,6 +1554,7 @@ export default function AppsScreen() {
     [
       insets.top,
       serverName,
+      setShowSwitcher,
       apps.length,
       isLoading,
       healthCounts,
@@ -1396,6 +1646,11 @@ export default function AppsScreen() {
         onClose={() => setShowSort(false)}
         sortKey={sortKey}
         setSortKey={setSortKey}
+      />
+
+      <InstanceSwitcherSheet
+        visible={showSwitcher}
+        onClose={() => setShowSwitcher(false)}
       />
     </View>
   );

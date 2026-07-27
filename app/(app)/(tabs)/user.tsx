@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { StatusBar } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,7 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { colors } from "../../../lib/theme";
 import { useArgoClient } from "../../../lib/client";
 import { logout } from "../../../lib/api";
-import { tokenStorage } from "../../../lib/storage";
+import { useInstanceStore } from "../../../lib/instanceStore";
 
 const MONO = Platform.OS === "ios" ? "Menlo" : "monospace";
 
@@ -51,9 +50,9 @@ function InfoRow({
 
 export default function UserScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const client = useArgoClient();
   const queryClient = useQueryClient();
+  const { activeId, removeInstance } = useInstanceStore();
 
   const { data: userInfo, isLoading } = useQuery({
     queryKey: client.queryKeys.userInfo(),
@@ -70,9 +69,10 @@ export default function UserScreen() {
           // Expire the server session cookie before dropping local state, so a
           // browser-login (cookie) session doesn't silently persist in the jar.
           await logout(client.serverUrl);
-          await tokenStorage.clear();
           queryClient.clear();
-          router.replace("/login");
+          if (activeId) await removeInstance(activeId);
+          // ArgoClientProvider redirects to /login if no instance remains.
+          // If another instance is still active, the app stays in /(app)/.
         },
       },
     ]);

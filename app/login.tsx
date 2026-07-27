@@ -21,7 +21,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -43,7 +43,8 @@ import {
   type AuthSettings,
   type OidcFlowConfig,
 } from "../lib/api";
-import { serverStorage, tokenStorage } from "../lib/storage";
+import { serverStorage } from "../lib/storage";
+import { useInstanceStore } from "../lib/instanceStore";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -572,6 +573,8 @@ type LoginState =
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { addNew } = useLocalSearchParams<{ addNew?: string }>();
+  const { activeInstance, upsertInstance } = useInstanceStore();
 
   const [serverUrl, setServerUrl] = useState<string | null>(null);
   const [authSettings, setAuthSettings] = useState<AuthSettings | null>(null);
@@ -586,16 +589,24 @@ export default function LoginScreen() {
   const [showServerModal, setShowServerModal] = useState(false);
   const [settingsRefreshKey, setSettingsRefreshKey] = useState(0);
 
-  // Load saved server URL on mount
+  // Pre-fill the server chip on mount. When addNew=1 (navigating here from the
+  // instance switcher to add a second server), always show the modal empty so
+  // the user can enter a new URL.
   useEffect(() => {
-    serverStorage.get().then((url) => {
-      if (url) {
-        setServerUrl(url);
-      } else {
-        setShowServerModal(true);
-      }
-    });
-  }, []);
+    if (addNew) {
+      setShowServerModal(true);
+      return;
+    }
+    const url = activeInstance?.url;
+    if (url) {
+      setServerUrl(url);
+    } else {
+      serverStorage.get().then((saved) => {
+        if (saved) setServerUrl(saved);
+        else setShowServerModal(true);
+      });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch auth settings when server URL changes or is re-saved
   useEffect(() => {
@@ -678,16 +689,19 @@ export default function LoginScreen() {
         username.trim(),
         password,
       );
-      await tokenStorage.set(token);
+      await upsertInstance(serverUrl, token);
       setLoginState("success");
-      setTimeout(() => router.replace("/(app)/"), 900);
+      setTimeout(
+        () => (addNew ? router.back() : router.replace("/(app)/")),
+        900,
+      );
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Login failed";
       setErrorMessage(msg);
       setLoginState("error");
       setTimeout(() => setLoginState("idle"), 2400);
     }
-  }, [canSubmit, serverUrl, username, password, router]);
+  }, [canSubmit, serverUrl, username, password, router, addNew, upsertInstance]);
 
   const handleSSO = useCallback(async () => {
     if (!oidcConfig || !discovery || loginState !== "idle") return;
@@ -715,9 +729,12 @@ export default function LoginScreen() {
         );
         const token = tokenResponse.idToken;
         if (!token) throw new Error("No id_token in token response");
-        await tokenStorage.set(token);
+        if (serverUrl) await upsertInstance(serverUrl, token);
         setLoginState("success");
-        setTimeout(() => router.replace("/(app)/"), 900);
+        setTimeout(
+          () => (addNew ? router.back() : router.replace("/(app)/")),
+          900,
+        );
       } else {
         setLoginState("idle");
       }
@@ -727,7 +744,7 @@ export default function LoginScreen() {
       setLoginState("error");
       setTimeout(() => setLoginState("idle"), 2400);
     }
-  }, [oidcConfig, discovery, loginState, redirectUri, router]);
+  }, [oidcConfig, discovery, loginState, redirectUri, router, serverUrl, addNew, upsertInstance]);
 
   const handleBrowserLogin = useCallback(() => {
     if (!serverUrl) {
@@ -745,10 +762,13 @@ export default function LoginScreen() {
       setShowServerModal(true);
       return;
     }
-    await tokenStorage.set("anonymous");
+    await upsertInstance(serverUrl, "anonymous");
     setLoginState("success");
-    setTimeout(() => router.replace("/(app)/"), 900);
-  }, [serverUrl, router]);
+    setTimeout(
+      () => (addNew ? router.back() : router.replace("/(app)/")),
+      900,
+    );
+  }, [serverUrl, router, addNew, upsertInstance]);
 
   const handleSaveServer = useCallback((url: string) => {
     serverStorage.set(url);

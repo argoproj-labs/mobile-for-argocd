@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { useRouter } from "expo-router";
 import {
   deleteResource,
@@ -27,7 +32,7 @@ import {
   type SyncApplicationOptions,
   type UserInfo,
 } from "./api";
-import { serverStorage, tokenStorage } from "./storage";
+import { useInstanceStore } from "./instanceStore";
 
 export class ArgoClient {
   constructor(
@@ -399,19 +404,23 @@ export function ArgoClientProvider({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const [client, setClient] = useState<ArgoClient | null>(null);
+  const { activeInstance, isLoaded } = useInstanceStore();
 
   useEffect(() => {
-    Promise.all([tokenStorage.get(), serverStorage.get()]).then(
-      ([token, server]) => {
-        if (token === null || !server) {
-          router.replace("/login");
-        } else {
-          setClient(new ArgoClient(server, token));
-        }
-      },
-    );
-  }, [router]);
+    if (!isLoaded) return;
+    if (!activeInstance) {
+      router.replace("/login");
+    }
+  }, [isLoaded, activeInstance, router]);
+
+  const client = useMemo(
+    () =>
+      activeInstance
+        ? new ArgoClient(activeInstance.url, activeInstance.token)
+        : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeInstance?.url, activeInstance?.token],
+  );
 
   if (!client) return null;
 
