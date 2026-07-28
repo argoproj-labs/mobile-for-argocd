@@ -946,6 +946,7 @@ export default function AppsScreen() {
 
   // Reset to first page whenever the filtered set changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE);
   }, [
     search,

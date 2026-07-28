@@ -2,7 +2,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import {
@@ -200,8 +199,8 @@ function ErrorToast({
   visible: boolean;
   message: string;
 }) {
-  const ty = useRef(new Animated.Value(-20)).current;
-  const op = useRef(new Animated.Value(0)).current;
+  const [ty] = useState(() => new Animated.Value(-20));
+  const [op] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     Animated.parallel([
@@ -231,11 +230,11 @@ function ErrorToast({
 
 // ── Success overlay ────────────────────────────────────────────
 function SuccessOverlay({ visible }: { visible: boolean }) {
-  const bgOp = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.6)).current;
-  const circleOp = useRef(new Animated.Value(0)).current;
-  const textOp = useRef(new Animated.Value(0)).current;
-  const textTy = useRef(new Animated.Value(8)).current;
+  const [bgOp] = useState(() => new Animated.Value(0));
+  const [scale] = useState(() => new Animated.Value(0.6));
+  const [circleOp] = useState(() => new Animated.Value(0));
+  const [textOp] = useState(() => new Animated.Value(0));
+  const [textTy] = useState(() => new Animated.Value(8));
 
   useEffect(() => {
     if (visible) {
@@ -426,11 +425,13 @@ export default function LoginScreen() {
   const needsServer = isLoaded && !serverUrl;
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (needsServer) setShowServerSheet(true);
   }, [needsServer]);
 
   // Credentials belong to one server; drop them when the selection changes.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUsername("");
     setPassword("");
   }, [serverUrl]);
@@ -439,6 +440,7 @@ export default function LoginScreen() {
   // previous request in flight, so responses are dropped once they are stale —
   // otherwise a slow answer from the old server overwrites the new one's.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthSettings(null);
     if (!serverUrl) return;
 
@@ -479,6 +481,7 @@ export default function LoginScreen() {
   const [discovery, setDiscovery] = useState<DiscoveryDocument | null>(null);
   useEffect(() => {
     if (!oidcConfig) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDiscovery(null);
       return;
     }

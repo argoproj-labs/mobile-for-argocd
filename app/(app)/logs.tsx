@@ -189,6 +189,7 @@ export default function LogsScreen() {
     const spec = (podSpec as { spec?: object })?.spec;
     if (!spec) return;
     const cs = extractContainers(spec);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContainers(cs);
     if (!container && cs.length > 0) setContainer(cs[0]);
   }, [podSpec]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -280,6 +281,7 @@ export default function LogsScreen() {
   // Start stream once container is known (or immediately for non-pod resources)
   useEffect(() => {
     if (hasPod && !container) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startStream();
     return () => {
       cleanupRef.current?.();

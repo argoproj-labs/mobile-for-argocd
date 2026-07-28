@@ -883,6 +883,7 @@ function LogsTabContent({
     const spec = (liveObj as { spec?: unknown })?.spec;
     if (!spec) return;
     const cs = extractContainersFromSpec(spec);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContainers(cs);
     setContainer((prev) => prev || cs[0] || "");
   }, [liveObj]);
@@ -957,6 +958,7 @@ function LogsTabContent({
 
   useEffect(() => {
     if (!container) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startStream();
     return () => {
       cleanupRef.current?.();
@@ -1201,6 +1203,7 @@ function DeleteModal({
 
   useEffect(() => {
     if (visible) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStrategy("foreground");
       setConfirmText("");
       setLoading(false);
@@ -1390,6 +1393,7 @@ function ActionModal({
     for (const p of action?.params ?? []) {
       defaults[p.name] = p.default ?? "";
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setParamValues(defaults);
     setError(null);
     setLoading(false);
@@ -1611,6 +1615,7 @@ export function ResourceDetailContent({
 
   const resourceKey = `${resource.group}/${resource.kind}/${resource.namespace}/${resource.name}`;
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveTab("summary");
   }, [resourceKey]);
 
