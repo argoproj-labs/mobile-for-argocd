@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload AAB
         if: github.event.inputs.distribution == 'aab'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ArgoCD-aab-${{ github.run_number }}-${{ github.sha }}
           path: android/app/build/outputs/bundle/release/app-release.aab
@@ -81,7 +81,7 @@ jobs:
 
       - name: Upload APK
         if: github.event.inputs.distribution == 'apk'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ArgoCD-apk-${{ github.run_number }}-${{ github.sha }}
           path: android/app/build/outputs/apk/release/app-release.apk
