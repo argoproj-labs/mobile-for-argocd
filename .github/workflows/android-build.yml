@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       distribution:
-        description: "Build type"
+        description: 'Build type'
         required: true
-        default: "aab"
+        default: 'aab'
         type: choice
         options:
           - aab
@@ -22,14 +22,14 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: "22"
-          cache: "yarn"
+          node-version: '22'
+          cache: 'yarn'
           cache-dependency-path: yarn.lock
 
       - uses: actions/setup-java@v5
         with:
-          distribution: "temurin"
-          java-version: "17"
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
