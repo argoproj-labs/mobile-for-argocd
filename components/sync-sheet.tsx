@@ -182,7 +182,6 @@ export function SyncSheet({ visible, onClose, app, onSync }: SyncSheetProps) {
   useEffect(() => {
     if (visible) {
       const d = parseSyncPolicy(app);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRevision(src?.targetRevision ?? "HEAD");
       setPrune(d.prune);
       setDryRun(false);

@@ -162,7 +162,6 @@ export function ResourceTreeSheet({
 
   useEffect(() => {
     if (visible && rootNode) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStack([{ title: nodeTitle(rootNode), parentUid: rootNode.uid ?? "" }]);
     }
   }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps

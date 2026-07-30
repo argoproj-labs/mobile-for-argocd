@@ -65,7 +65,6 @@ export function ServerSheet({
   // empty row instead of showing a bare sheet.
   useEffect(() => {
     if (visible && instances.length === 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditing(NEW_ROW);
       setDraft("");
       setError(null);

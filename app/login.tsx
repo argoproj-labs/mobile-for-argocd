@@ -425,13 +425,11 @@ export default function LoginScreen() {
   const needsServer = isLoaded && !serverUrl;
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (needsServer) setShowServerSheet(true);
   }, [needsServer]);
 
   // Credentials belong to one server; drop them when the selection changes.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setUsername("");
     setPassword("");
   }, [serverUrl]);
@@ -440,7 +438,6 @@ export default function LoginScreen() {
   // previous request in flight, so responses are dropped once they are stale —
   // otherwise a slow answer from the old server overwrites the new one's.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAuthSettings(null);
     if (!serverUrl) return;
 
@@ -481,7 +478,6 @@ export default function LoginScreen() {
   const [discovery, setDiscovery] = useState<DiscoveryDocument | null>(null);
   useEffect(() => {
     if (!oidcConfig) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDiscovery(null);
       return;
     }
