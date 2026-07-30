@@ -506,7 +506,7 @@ export default function AppDetailsScreen() {
   const resourceGroups = useMemo(() => {
     if (!app?.status?.resources) return [];
     const base = applyResourceFilter(
-      [...app.status.resources].filter((r) => !r.hook),
+      [...app?.status?.resources].filter((r) => !r.hook),
       resourceFilter,
     ).sort((a, b) => {
       const ka = kindLabel(a.group, a.kind);

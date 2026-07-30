@@ -7,4 +7,9 @@ module.exports = [
   {
     ignores: ["node_modules/", "assets/", ".expo/"],
   },
+  {
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ];

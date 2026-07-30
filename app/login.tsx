@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Animated,
   Image,
@@ -200,8 +194,8 @@ function ErrorToast({
   visible: boolean;
   message: string;
 }) {
-  const ty = useRef(new Animated.Value(-20)).current;
-  const op = useRef(new Animated.Value(0)).current;
+  const [ty] = useState(() => new Animated.Value(-20));
+  const [op] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     Animated.parallel([
@@ -231,11 +225,11 @@ function ErrorToast({
 
 // ── Success overlay ────────────────────────────────────────────
 function SuccessOverlay({ visible }: { visible: boolean }) {
-  const bgOp = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.6)).current;
-  const circleOp = useRef(new Animated.Value(0)).current;
-  const textOp = useRef(new Animated.Value(0)).current;
-  const textTy = useRef(new Animated.Value(8)).current;
+  const [bgOp] = useState(() => new Animated.Value(0));
+  const [scale] = useState(() => new Animated.Value(0.6));
+  const [circleOp] = useState(() => new Animated.Value(0));
+  const [textOp] = useState(() => new Animated.Value(0));
+  const [textTy] = useState(() => new Animated.Value(8));
 
   useEffect(() => {
     if (visible) {
