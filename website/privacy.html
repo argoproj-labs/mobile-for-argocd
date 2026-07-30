@@ -1,182 +1,442 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Privacy — ArgoCD Mobile</title>
-<meta name="description" content="Privacy policy for ArgoCD Mobile. We collect no analytics, no telemetry, and no personal data. Your data stays between your device and your Argo CD server.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-<header class="site-header">
-  <div class="inner">
-    <a class="brand" href="index.html">
-      <span class="mark" aria-hidden="true">
-        <img src="assets/argocd-logo.png" alt="ArgoCD logo">
-      </span>
-      <span>ArgoCD Mobile</span>
-    </a>
-    <nav class="nav">
-      <a href="index.html#features">Features</a>
-      <a href="index.html#open-source">Open Source</a>
-      <a href="support.html#sso">SSO Setup</a>
-      <a href="support.html">Support</a>
-      <a href="privacy.html" class="active">Privacy</a>
-    </nav>
-    <div class="header-actions">
-      <a class="icon-btn" href="https://github.com/argoproj-labs/mobile-for-argocd" aria-label="GitHub repository" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"/></svg>
-      </a>
-      <button class="icon-btn" data-theme-toggle aria-label="Toggle theme">
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
-      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-      </button>
-    </div>
-  </div>
-  <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile menu">
-    <a href="index.html#features">Features</a>
-    <a href="index.html#open-source">Open Source</a>
-    <a href="support.html#sso">SSO Setup</a>
-    <a href="support.html">Support</a>
-    <a href="privacy.html" class="active">Privacy</a>
-  </nav>
-</header>
-
-<section class="page-hero">
-  <div class="container">
-    <span class="eyebrow">// Privacy Policy</span>
-    <h1>Your data, your servers.<br>Nothing flows through us.</h1>
-    <p class="lead">ArgoCD Mobile is built on a simple principle: the only entities who should see your deployments are you and your Argo CD instance. We don't run a backend. We don't collect analytics. We don't have your data because we never asked for it.</p>
-  </div>
-</section>
-
-<div class="container">
-  <div class="privacy-wrap">
-    <aside class="toc" aria-label="Table of contents">
-      <h5>On this page</h5>
-      <a href="#summary">Summary</a>
-      <a href="#what-we-collect">What we collect</a>
-      <a href="#data-storage">Data storage</a>
-      <a href="#network">Network communication</a>
-      <a href="#third-parties">Third parties</a>
-      <a href="#children">Children's privacy</a>
-      <a href="#changes">Changes to this policy</a>
-      <a href="#contact">Contact</a>
-    </aside>
-
-    <main class="prose">
-      <div class="summary-card" id="summary">
-        <span class="summary-eyebrow">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/></svg>
-          tl;dr
-        </span>
-        <h2>We collect nothing.</h2>
-        <p class="summary-body">ArgoCD Mobile has no servers, no accounts, and no telemetry. Your credentials and deployment data live on your device and travel only between your phone and the Argo CD server you point it at.</p>
-        <ul class="checklist">
-          <li><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> No analytics SDKs</li>
-          <li><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> No crash reporting</li>
-          <li><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> No user accounts</li>
-          <li><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> No third-party tracking</li>
-          <li><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> No advertising</li>
-          <li><span class="check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> Open source &amp; auditable</li>
-        </ul>
-      </div>
-
-      <h2 id="what-we-collect">What we collect</h2>
-      <p><strong>Nothing on our side.</strong> ArgoCD Mobile does not operate any servers and does not transmit any data to the developer. There are no analytics services, no crash reporters, no advertising SDKs, and no user accounts.</p>
-      <p>The only data the app handles is information you explicitly enter or that your Argo CD server returns:</p>
-      <ul>
-        <li>The URL of your Argo CD instance</li>
-        <li>Authentication credentials (OIDC tokens or username/password)</li>
-        <li>Application data returned by the Argo CD API (manifests, statuses, logs, events)</li>
-      </ul>
-
-      <h2 id="data-storage">Data storage</h2>
-      <p>All sensitive data is stored locally on your device:</p>
-      <ul>
-        <li><strong>OIDC tokens and refresh tokens</strong> are stored in the iOS <code>Keychain</code>, hardware-protected by the Secure Enclave on supported devices.</li>
-        <li><strong>Server URLs and non-sensitive preferences</strong> are stored in standard iOS app storage (<code>UserDefaults</code>).</li>
-        <li><strong>Application data</strong> from your Argo CD instance is held in memory while the app is running and is not persisted to disk.</li>
-      </ul>
-      <p>Username/password credentials, if used, are also kept in the iOS Keychain. Removing the app from your device removes all stored data.</p>
-
-      <h2 id="network">Network communication</h2>
-      <p>The app communicates only with two destinations, both of which you control:</p>
-      <ul>
-        <li>The <strong>Argo CD server</strong> at the URL you configure.</li>
-        <li>Your <strong>identity provider</strong>, when signing in via OIDC/PKCE.</li>
-      </ul>
-      <p>All communication uses HTTPS. The app does not route traffic through any proxy operated by the developer or any third party.</p>
-
-      <h2 id="third-parties">Third parties</h2>
-      <p>ArgoCD Mobile is built with React Native and does not embed any analytics, advertising, or tracking SDKs. It depends only on standard React Native networking and storage modules plus a small number of open-source libraries that run entirely on-device. None of them transmit data off the device.</p>
-      <p>The App Store itself is operated by Apple and is subject to <a href="https://www.apple.com/legal/privacy/" target="_blank" rel="noopener">Apple's Privacy Policy</a>.</p>
-
-      <h2 id="children">Children's privacy</h2>
-      <p>ArgoCD Mobile is a developer tool intended for IT and engineering professionals. It is not directed at children under 13 and we do not knowingly collect any data from anyone, regardless of age.</p>
-
-      <h2 id="changes">Changes to this policy</h2>
-      <p>If this policy changes in any meaningful way, the change will be committed to the public <a href="https://github.com/argoproj-labs/mobile-for-argocd" target="_blank" rel="noopener">GitHub repository</a> with full version history. The "Last updated" date below will also change.</p>
-
-      <h2 id="contact">Contact</h2>
-      <p>Questions or concerns about privacy are welcome as <a href="https://github.com/argoproj-labs/mobile-for-argocd/issues" target="_blank" rel="noopener">GitHub Issues</a> on the project repository — public, traceable, and answered in the open.</p>
-
-      <p class="updated mono">LAST UPDATED · 2026-05-04</p>
-    </main>
-  </div>
-</div>
-
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy — ArgoCD Mobile</title>
+    <meta
+      name="description"
+      content="Privacy policy for ArgoCD Mobile. We collect no analytics, no telemetry, and no personal data. Your data stays between your device and your Argo CD server."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="inner">
         <a class="brand" href="index.html">
           <span class="mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3a6 6 0 0 1 6 6v3H6V9a6 6 0 0 1 6-6Z"/>
-              <path d="M6 12c-.7 1.5-1.5 2.5-3 3M9 12c-.5 2-.2 4 1 5M15 12c.5 2 .2 4-1 5M18 12c.7 1.5 1.5 2.5 3 3M12 12v6"/>
-            </svg>
+            <img src="assets/argocd-logo.png" alt="ArgoCD logo" />
           </span>
           <span>ArgoCD Mobile</span>
         </a>
-        <p>A community-built iOS and Android client for Argo CD — free, open source, and made with care.</p>
+        <nav class="nav">
+          <a href="index.html#features">Features</a>
+          <a href="index.html#open-source">Open Source</a>
+          <a href="support.html#sso">SSO Setup</a>
+          <a href="support.html">Support</a>
+          <a href="privacy.html" class="active">Privacy</a>
+        </nav>
+        <div class="header-actions">
+          <a
+            class="icon-btn"
+            href="https://github.com/argoproj-labs/mobile-for-argocd"
+            aria-label="GitHub repository"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"
+              />
+            </svg>
+          </a>
+          <button class="icon-btn" data-theme-toggle aria-label="Toggle theme">
+            <svg
+              class="moon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+            <svg
+              class="sun"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+              />
+            </svg>
+          </button>
+          <button
+            class="icon-btn menu-btn"
+            id="menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="mobile-nav"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            </svg>
+          </button>
+        </div>
       </div>
-      <div class="footer-col">
-        <h4>Product</h4>
+      <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile menu">
         <a href="index.html#features">Features</a>
-        <a href="index.html#open-source">Open source</a>
-        <a href="https://apps.apple.com/app/id6766354032">App Store</a>
-      </div>
-      <div class="footer-col">
-        <h4>Resources</h4>
+        <a href="index.html#open-source">Open Source</a>
         <a href="support.html#sso">SSO Setup</a>
         <a href="support.html">Support</a>
-        <a href="https://github.com/argoproj-labs/mobile-for-argocd/issues" target="_blank" rel="noopener">Report an issue</a>
-        <a href="https://github.com/argoproj-labs/mobile-for-argocd/discussions" target="_blank" rel="noopener">Discussions</a>
-      </div>
-      <div class="footer-col">
-        <h4>Legal</h4>
-        <a href="privacy.html">Privacy</a>
-        <a href="https://github.com/argoproj-labs/mobile-for-argocd/blob/main/LICENSE" target="_blank" rel="noopener">License (MIT)</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 Alexander Matyushentsev</span>
-      <span class="mono">built with care</span>
-    </div>
-  </div>
-</footer>
+        <a href="privacy.html" class="active">Privacy</a>
+      </nav>
+    </header>
 
-<script src="script.js"></script>
-</body>
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">// Privacy Policy</span>
+        <h1>Your data, your servers.<br />Nothing flows through us.</h1>
+        <p class="lead">
+          ArgoCD Mobile is built on a simple principle: the only entities who
+          should see your deployments are you and your Argo CD instance. We
+          don't run a backend. We don't collect analytics. We don't have your
+          data because we never asked for it.
+        </p>
+      </div>
+    </section>
+
+    <div class="container">
+      <div class="privacy-wrap">
+        <aside class="toc" aria-label="Table of contents">
+          <h5>On this page</h5>
+          <a href="#summary">Summary</a>
+          <a href="#what-we-collect">What we collect</a>
+          <a href="#data-storage">Data storage</a>
+          <a href="#network">Network communication</a>
+          <a href="#third-parties">Third parties</a>
+          <a href="#children">Children's privacy</a>
+          <a href="#changes">Changes to this policy</a>
+          <a href="#contact">Contact</a>
+        </aside>
+
+        <main class="prose">
+          <div class="summary-card" id="summary">
+            <span class="summary-eyebrow">
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"
+                />
+              </svg>
+              tl;dr
+            </span>
+            <h2>We collect nothing.</h2>
+            <p class="summary-body">
+              ArgoCD Mobile has no servers, no accounts, and no telemetry. Your
+              credentials and deployment data live on your device and travel
+              only between your phone and the Argo CD server you point it at.
+            </p>
+            <ul class="checklist">
+              <li>
+                <span class="check"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" /></svg
+                ></span>
+                No analytics SDKs
+              </li>
+              <li>
+                <span class="check"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" /></svg
+                ></span>
+                No crash reporting
+              </li>
+              <li>
+                <span class="check"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" /></svg
+                ></span>
+                No user accounts
+              </li>
+              <li>
+                <span class="check"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" /></svg
+                ></span>
+                No third-party tracking
+              </li>
+              <li>
+                <span class="check"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" /></svg
+                ></span>
+                No advertising
+              </li>
+              <li>
+                <span class="check"
+                  ><svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M20 6 9 17l-5-5" /></svg
+                ></span>
+                Open source &amp; auditable
+              </li>
+            </ul>
+          </div>
+
+          <h2 id="what-we-collect">What we collect</h2>
+          <p>
+            <strong>Nothing on our side.</strong> ArgoCD Mobile does not operate
+            any servers and does not transmit any data to the developer. There
+            are no analytics services, no crash reporters, no advertising SDKs,
+            and no user accounts.
+          </p>
+          <p>
+            The only data the app handles is information you explicitly enter or
+            that your Argo CD server returns:
+          </p>
+          <ul>
+            <li>The URL of your Argo CD instance</li>
+            <li>
+              Authentication credentials (OIDC tokens or username/password)
+            </li>
+            <li>
+              Application data returned by the Argo CD API (manifests, statuses,
+              logs, events)
+            </li>
+          </ul>
+
+          <h2 id="data-storage">Data storage</h2>
+          <p>All sensitive data is stored locally on your device:</p>
+          <ul>
+            <li>
+              <strong>OIDC tokens and refresh tokens</strong> are stored in the
+              iOS <code>Keychain</code>, hardware-protected by the Secure
+              Enclave on supported devices.
+            </li>
+            <li>
+              <strong>Server URLs and non-sensitive preferences</strong> are
+              stored in standard iOS app storage (<code>UserDefaults</code>).
+            </li>
+            <li>
+              <strong>Application data</strong> from your Argo CD instance is
+              held in memory while the app is running and is not persisted to
+              disk.
+            </li>
+          </ul>
+          <p>
+            Username/password credentials, if used, are also kept in the iOS
+            Keychain. Removing the app from your device removes all stored data.
+          </p>
+
+          <h2 id="network">Network communication</h2>
+          <p>
+            The app communicates only with two destinations, both of which you
+            control:
+          </p>
+          <ul>
+            <li>
+              The <strong>Argo CD server</strong> at the URL you configure.
+            </li>
+            <li>
+              Your <strong>identity provider</strong>, when signing in via
+              OIDC/PKCE.
+            </li>
+          </ul>
+          <p>
+            All communication uses HTTPS. The app does not route traffic through
+            any proxy operated by the developer or any third party.
+          </p>
+
+          <h2 id="third-parties">Third parties</h2>
+          <p>
+            ArgoCD Mobile is built with React Native and does not embed any
+            analytics, advertising, or tracking SDKs. It depends only on
+            standard React Native networking and storage modules plus a small
+            number of open-source libraries that run entirely on-device. None of
+            them transmit data off the device.
+          </p>
+          <p>
+            The App Store itself is operated by Apple and is subject to
+            <a
+              href="https://www.apple.com/legal/privacy/"
+              target="_blank"
+              rel="noopener"
+              >Apple's Privacy Policy</a
+            >.
+          </p>
+
+          <h2 id="children">Children's privacy</h2>
+          <p>
+            ArgoCD Mobile is a developer tool intended for IT and engineering
+            professionals. It is not directed at children under 13 and we do not
+            knowingly collect any data from anyone, regardless of age.
+          </p>
+
+          <h2 id="changes">Changes to this policy</h2>
+          <p>
+            If this policy changes in any meaningful way, the change will be
+            committed to the public
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd"
+              target="_blank"
+              rel="noopener"
+              >GitHub repository</a
+            >
+            with full version history. The "Last updated" date below will also
+            change.
+          </p>
+
+          <h2 id="contact">Contact</h2>
+          <p>
+            Questions or concerns about privacy are welcome as
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/issues"
+              target="_blank"
+              rel="noopener"
+              >GitHub Issues</a
+            >
+            on the project repository — public, traceable, and answered in the
+            open.
+          </p>
+
+          <p class="updated mono">LAST UPDATED · 2026-05-04</p>
+        </main>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <a class="brand" href="index.html">
+              <span class="mark" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 3a6 6 0 0 1 6 6v3H6V9a6 6 0 0 1 6-6Z" />
+                  <path
+                    d="M6 12c-.7 1.5-1.5 2.5-3 3M9 12c-.5 2-.2 4 1 5M15 12c.5 2 .2 4-1 5M18 12c.7 1.5 1.5 2.5 3 3M12 12v6"
+                  />
+                </svg>
+              </span>
+              <span>ArgoCD Mobile</span>
+            </a>
+            <p>
+              A community-built iOS and Android client for Argo CD — free, open
+              source, and made with care.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="index.html#features">Features</a>
+            <a href="index.html#open-source">Open source</a>
+            <a href="https://apps.apple.com/app/id6766354032">App Store</a>
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="support.html#sso">SSO Setup</a>
+            <a href="support.html">Support</a>
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/issues"
+              target="_blank"
+              rel="noopener"
+              >Report an issue</a
+            >
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/discussions"
+              target="_blank"
+              rel="noopener"
+              >Discussions</a
+            >
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="privacy.html">Privacy</a>
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/blob/main/LICENSE"
+              target="_blank"
+              rel="noopener"
+              >License (MIT)</a
+            >
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 Alexander Matyushentsev</span>
+          <span class="mono">built with care</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
 </html>

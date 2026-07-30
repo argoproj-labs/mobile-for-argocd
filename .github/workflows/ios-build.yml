@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       distribution:
-        description: 'Distribution method'
+        description: "Distribution method"
         required: true
-        default: 'ad-hoc'
+        default: "ad-hoc"
         type: choice
         options:
           - ad-hoc
@@ -22,8 +22,8 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          cache: 'yarn'
+          node-version: "22"
+          cache: "yarn"
           cache-dependency-path: yarn.lock
 
       - name: Select latest Xcode

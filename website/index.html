@@ -1,327 +1,816 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard For Argo CD — Argo CD in your pocket</title>
-<meta name="description" content="A native iOS and Android app for monitoring and managing Argo CD deployments. Free, open source, and connects directly to your self-hosted Argo CD instance.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="icon" type="image/x-icon" href="favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-<!-- ============== HEADER ============== -->
-<header class="site-header">
-  <div class="inner">
-    <a class="brand" href="index.html" aria-label="Dashboard For Argo CD home">
-      <span class="mark" aria-hidden="true">
-        <!-- octopus glyph placeholder: stylized 'A' / squid -->
-        <img src="assets/argocd-logo.png" alt="ArgoCD logo">
-      </span>
-      <span>Dashboard For Argo CD</span>
-    </a>
-    <nav class="nav" aria-label="Primary">
-      <a href="index.html#features">Features</a>
-      <a href="index.html#open-source">Open Source</a>
-      <a href="support.html#sso">SSO Setup</a>
-      <a href="support.html">Support</a>
-      <a href="privacy.html">Privacy</a>
-    </nav>
-    <div class="header-actions">
-      <a class="icon-btn" href="https://github.com/argoproj-labs/mobile-for-argocd" aria-label="GitHub repository" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"/></svg>
-      </a>
-      <button class="icon-btn" data-theme-toggle aria-label="Toggle theme">
-        <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/></svg>
-        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      </button>
-      <button class="icon-btn menu-btn" id="menu-btn" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-      </button>
-      <a class="btn btn-primary" href="https://github.com/argoproj-labs/mobile-for-argocd" target="_blank" rel="noopener" style="display:none">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"/></svg>
-        Star on GitHub
-      </a>
-    </div>
-  </div>
-  <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile menu">
-    <a href="index.html#features">Features</a>
-    <a href="index.html#open-source">Open Source</a>
-    <a href="support.html#sso">SSO Setup</a>
-    <a href="support.html">Support</a>
-    <a href="privacy.html">Privacy</a>
-  </nav>
-</header>
-
-<!-- ============== HERO ============== -->
-<section class="hero">
-  <div class="hero-glow" aria-hidden="true"></div>
-  <div class="hero-grid" aria-hidden="true"></div>
-  <div class="container">
-    <div class="hero-text">
-      <span class="pill">
-        <span class="dot" aria-hidden="true"></span>
-        <span class="mono">open source</span>
-      </span>
-      <h1>Argo CD<br><span class="accent">in your pocket.</span></h1>
-      <p class="lead">
-        A native iOS and Android app for monitoring and managing Argo CD deployments — wherever you are. Connects directly to your self-hosted instance. No middleman, no telemetry, no fees.
-      </p>
-
-      <div class="cta-row">
-        <a class="btn btn-primary" href="https://github.com/argoproj-labs/mobile-for-argocd" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"/></svg>
-          Star on GitHub
-        </a>
-        <a class="appstore-link" href="https://apps.apple.com/app/id6766354032" aria-label="Download on the App Store" target="_blank" rel="noopener">
-          <svg class="apple" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01ZM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25Z"/></svg>
-          <span>
-            <span class="label-tiny">App Store</span>
-            <span style="font-size:0.86rem;font-weight:500;">Download</span>
-          </span>
-        </a>
-        <a class="appstore-link" href="https://play.google.com/store/apps/details?id=io.argoprojlabs.argocd.mobile" aria-label="Get it on Google Play" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><path d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"/></svg>
-          <span>
-            <span class="label-tiny">Google Play</span>
-            <span style="font-size:0.86rem;font-weight:500;">Download</span>
-          </span>
-        </a>
-      </div>
-
-      <div class="hero-meta">
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Free forever</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Self-hosted &amp; private</span>
-        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> SSO + OIDC</span>
-      </div>
-    </div>
-
-    <div class="phone-stage" aria-hidden="true">
-      <div class="phone">
-        <div class="screen">
-          <img src="assets/app-screenshot.png" alt="Dashboard For Argo CD app showing list of applications with sync status">
-        </div>
-      </div>
-
-      <div class="float-card float-1">
-        <div class="fc-icon" style="background:color-mix(in oklch, var(--green) 22%, var(--bg-elev-2)); color:var(--green); border:1px solid color-mix(in oklch, var(--green) 35%, transparent);">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        </div>
-        <div>
-          <div class="fc-title">Synced</div>
-          <div class="fc-sub mono">argo-rollouts · 9s ago</div>
-        </div>
-      </div>
-
-      <div class="float-card float-2">
-        <div class="fc-icon" style="background:color-mix(in oklch, var(--accent-2) 22%, var(--bg-elev-2)); color:var(--accent-2); border:1px solid color-mix(in oklch, var(--accent-2) 35%, transparent);">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-3 7h5l-3 7M5 12h14"/></svg>
-        </div>
-        <div>
-          <div class="fc-title">Sync triggered</div>
-          <div class="fc-sub mono">prod / payments-api</div>
-        </div>
-      </div>
-
-      <div class="float-card float-3">
-        <div class="fc-icon" style="background:color-mix(in oklch, var(--accent) 18%, var(--bg-elev-2)); color:var(--accent); border:1px solid color-mix(in oklch, var(--accent) 35%, transparent);">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
-        </div>
-        <div>
-          <div class="fc-title">Live</div>
-          <div class="fc-sub mono">streaming pod logs</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== FEATURES ============== -->
-<section class="section" id="features">
-  <div class="container">
-    <div class="section-head">
-      <span class="eyebrow">// Features</span>
-      <h2>Everything you need to ship from anywhere.</h2>
-      <p>Real-time visibility and control over your Argo CD applications, designed for the on-call rotation, the airport, and the couch.</p>
-    </div>
-
-    <div class="feature-grid">
-      <div class="feature">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
-        </div>
-        <h3>Real-time status</h3>
-        <p>Browse all applications with live health and sync status, refreshed automatically.</p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M6 12h12M10 19h4"/></svg>
-        </div>
-        <h3>Powerful filters</h3>
-        <p>Filter by sync state, health, project, namespace, cluster, and labels — instantly.</p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m13 2-3 7h5l-3 7"/><path d="M5 12h14"/></svg>
-        </div>
-        <h3>Full control</h3>
-        <p>Trigger sync, hard refresh, and rollback releases — directly from your phone.</p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M8 6h8M6 8v8M18 8v8M8 18h8"/></svg>
-        </div>
-        <h3>Resource tree</h3>
-        <p>Inspect managed resources, view diffs, and read full YAML manifests on the go.</p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v14H4z"/><path d="m8 10 3 2-3 2M13 14h4"/></svg>
-        </div>
-        <h3>Live logs</h3>
-        <p>Stream pod logs with container selection in real time. Search, follow, share.</p>
-      </div>
-
-      <div class="feature">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg>
-        </div>
-        <h3>SSO &amp; password login</h3>
-        <p>OIDC/PKCE for SSO — credentials never leave your provider. Username/password as fallback.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== OPEN SOURCE BAND ============== -->
-<section class="oss-band" id="open-source">
-  <div class="container">
-    <div class="oss-inner">
-      <div>
-        <span class="eyebrow">// Built in the open</span>
-        <h2 style="margin-top:14px;">Free, open source, and yours to fork.</h2>
-        <p>No accounts, no analytics, no upsells. The whole app is on GitHub under a permissive license. Found a bug? Open an issue. Want a feature? Send a PR. The community drives the roadmap.</p>
-
-        <div class="oss-stats">
-          <div class="oss-stat">
-            <div class="num">$0</div>
-            <div class="lbl">Forever free</div>
-          </div>
-          <div class="oss-stat">
-            <div class="num">0 KB</div>
-            <div class="lbl">Telemetry shipped</div>
-          </div>
-          <div class="oss-stat">
-            <div class="num">100%</div>
-            <div class="lbl">Self-hosted data</div>
-          </div>
-          <div class="oss-stat">
-            <div class="num">MIT</div>
-            <div class="lbl">License</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="gh-card">
-        <div class="gh-row">
-          <div class="repo-name"><span class="org">argoproj-labs /</span> mobile-for-argocd</div>
-          <span class="pill" style="font-size:0.7rem; padding:3px 9px 3px 6px;">
-            <span class="dot" style="background:var(--green); box-shadow:0 0 0 3px color-mix(in oklch, var(--green) 25%, transparent);"></span>
-            <span>active</span>
-          </span>
-        </div>
-        <div style="color:var(--fg-muted); font-size:0.85rem; line-height:1.5; margin-bottom:14px;">
-          A native iOS and Android app for monitoring and managing Argo CD deployments.
-        </div>
-        <a class="star-btn" href="https://github.com/argoproj-labs/mobile-for-argocd" target="_blank" rel="noopener">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>
-          Star this project
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== HOW IT WORKS ============== -->
-<section class="section" style="padding-top:90px; padding-bottom:90px;">
-  <div class="container">
-    <div class="section-head center">
-      <span class="eyebrow">// How it works</span>
-      <h2>Three steps. No backend to install.</h2>
-    </div>
-
-    <div class="steps">
-      <div style="background:var(--bg-elev); border:1px solid var(--line-soft); border-radius:var(--radius-lg); padding:28px; position:relative;">
-        <div class="mono" style="color:var(--accent); font-size:0.78rem; letter-spacing:0.16em;">01</div>
-        <h3 style="font-size:1.1rem; font-weight:600; margin:14px 0 10px; letter-spacing:-0.01em;">Point at your Argo CD</h3>
-        <p style="color:var(--fg-muted); font-size:0.92rem; line-height:1.6;">Enter the URL of your self-hosted Argo CD server. The app talks directly to it — no relay, no proxy.</p>
-      </div>
-      <div style="background:var(--bg-elev); border:1px solid var(--line-soft); border-radius:var(--radius-lg); padding:28px; position:relative;">
-        <div class="mono" style="color:var(--accent); font-size:0.78rem; letter-spacing:0.16em;">02</div>
-        <h3 style="font-size:1.1rem; font-weight:600; margin:14px 0 10px; letter-spacing:-0.01em;">Sign in with SSO</h3>
-        <p style="color:var(--fg-muted); font-size:0.92rem; line-height:1.6;">Authenticate via OIDC/PKCE through your existing identity provider. Tokens stay in iOS Keychain.</p>
-      </div>
-      <div style="background:var(--bg-elev); border:1px solid var(--line-soft); border-radius:var(--radius-lg); padding:28px; position:relative;">
-        <div class="mono" style="color:var(--accent); font-size:0.78rem; letter-spacing:0.16em;">03</div>
-        <h3 style="font-size:1.1rem; font-weight:600; margin:14px 0 10px; letter-spacing:-0.01em;">Monitor &amp; act</h3>
-        <p style="color:var(--fg-muted); font-size:0.92rem; line-height:1.6;">Watch sync status update in real time. Trigger syncs, refresh, or roll back without unlocking a laptop.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============== FOOTER ============== -->
-<footer class="site-footer">
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <a class="brand" href="index.html">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard For Argo CD — Argo CD in your pocket</title>
+    <meta
+      name="description"
+      content="A native iOS and Android app for monitoring and managing Argo CD deployments. Free, open source, and connects directly to your self-hosted Argo CD instance."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- ============== HEADER ============== -->
+    <header class="site-header">
+      <div class="inner">
+        <a
+          class="brand"
+          href="index.html"
+          aria-label="Dashboard For Argo CD home"
+        >
           <span class="mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 3a6 6 0 0 1 6 6v3H6V9a6 6 0 0 1 6-6Z"/>
-              <path d="M6 12c-.7 1.5-1.5 2.5-3 3M9 12c-.5 2-.2 4 1 5M15 12c.5 2 .2 4-1 5M18 12c.7 1.5 1.5 2.5 3 3M12 12v6"/>
-            </svg>
+            <!-- octopus glyph placeholder: stylized 'A' / squid -->
+            <img src="assets/argocd-logo.png" alt="ArgoCD logo" />
           </span>
           <span>Dashboard For Argo CD</span>
         </a>
-        <p>A community-built iOS and Android client for Argo CD — free, open source, and made with care.</p>
+        <nav class="nav" aria-label="Primary">
+          <a href="index.html#features">Features</a>
+          <a href="index.html#open-source">Open Source</a>
+          <a href="support.html#sso">SSO Setup</a>
+          <a href="support.html">Support</a>
+          <a href="privacy.html">Privacy</a>
+        </nav>
+        <div class="header-actions">
+          <a
+            class="icon-btn"
+            href="https://github.com/argoproj-labs/mobile-for-argocd"
+            aria-label="GitHub repository"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"
+              />
+            </svg>
+          </a>
+          <button class="icon-btn" data-theme-toggle aria-label="Toggle theme">
+            <svg
+              class="moon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+            </svg>
+            <svg
+              class="sun"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="4" />
+              <path
+                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"
+              />
+            </svg>
+          </button>
+          <button
+            class="icon-btn menu-btn"
+            id="menu-btn"
+            aria-label="Open menu"
+            aria-expanded="false"
+            aria-controls="mobile-nav"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            </svg>
+          </button>
+          <a
+            class="btn btn-primary"
+            href="https://github.com/argoproj-labs/mobile-for-argocd"
+            target="_blank"
+            rel="noopener"
+            style="display: none"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"
+              />
+            </svg>
+            Star on GitHub
+          </a>
+        </div>
       </div>
-      <div class="footer-col">
-        <h4>Product</h4>
+      <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile menu">
         <a href="index.html#features">Features</a>
-        <a href="index.html#open-source">Open source</a>
-        <a href="https://apps.apple.com/app/id6766354032">App Store</a>
-        <a href="https://play.google.com/store/apps/details?id=io.argoprojlabs.argocd.mobile" target="_blank" rel="noopener">Google Play</a>
-      </div>
-      <div class="footer-col">
-        <h4>Resources</h4>
+        <a href="index.html#open-source">Open Source</a>
         <a href="support.html#sso">SSO Setup</a>
         <a href="support.html">Support</a>
-        <a href="https://github.com/argoproj-labs/mobile-for-argocd/issues" target="_blank" rel="noopener">Report an issue</a>
-        <a href="https://github.com/argoproj-labs/mobile-for-argocd/discussions" target="_blank" rel="noopener">Discussions</a>
-      </div>
-      <div class="footer-col">
-        <h4>Legal</h4>
         <a href="privacy.html">Privacy</a>
-        <a href="https://github.com/argoproj-labs/mobile-for-argocd/blob/main/LICENSE" target="_blank" rel="noopener">License (MIT)</a>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <span>© 2026 Alexander Matyushentsev</span>
-      <span class="mono">built with care</span>
-    </div>
-  </div>
-</footer>
+      </nav>
+    </header>
 
-<script src="script.js"></script>
-</body>
+    <!-- ============== HERO ============== -->
+    <section class="hero">
+      <div class="hero-glow" aria-hidden="true"></div>
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="container">
+        <div class="hero-text">
+          <span class="pill">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="mono">open source</span>
+          </span>
+          <h1>Argo CD<br /><span class="accent">in your pocket.</span></h1>
+          <p class="lead">
+            A native iOS and Android app for monitoring and managing Argo CD
+            deployments — wherever you are. Connects directly to your
+            self-hosted instance. No middleman, no telemetry, no fees.
+          </p>
+
+          <div class="cta-row">
+            <a
+              class="btn btn-primary"
+              href="https://github.com/argoproj-labs/mobile-for-argocd"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.37-3.87-1.37-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.69 1.25 3.34.96.1-.74.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.18-3.1-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.15 1.18a10.95 10.95 0 0 1 5.74 0c2.19-1.49 3.15-1.18 3.15-1.18.62 1.58.23 2.75.11 3.04.74.81 1.18 1.84 1.18 3.1 0 4.42-2.7 5.39-5.27 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.66.8.55C20.22 21.39 23.5 17.08 23.5 12 23.5 5.65 18.35.5 12 .5Z"
+                />
+              </svg>
+              Star on GitHub
+            </a>
+            <a
+              class="appstore-link"
+              href="https://apps.apple.com/app/id6766354032"
+              aria-label="Download on the App Store"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg
+                class="apple"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01ZM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25Z"
+                />
+              </svg>
+              <span>
+                <span class="label-tiny">App Store</span>
+                <span style="font-size: 0.86rem; font-weight: 500"
+                  >Download</span
+                >
+              </span>
+            </a>
+            <a
+              class="appstore-link"
+              href="https://play.google.com/store/apps/details?id=io.argoprojlabs.argocd.mobile"
+              aria-label="Get it on Google Play"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                width="20"
+                height="20"
+                aria-hidden="true"
+              >
+                <path
+                  d="M22.018 13.298l-3.919 2.218-3.515-3.493 3.543-3.521 3.891 2.202a1.49 1.49 0 0 1 0 2.594zM1.337.924a1.486 1.486 0 0 0-.112.568v21.017c0 .217.045.419.124.6l11.155-11.087L1.337.924zm12.207 10.065l3.258-3.238L3.45.195a1.466 1.466 0 0 0-.946-.179l11.04 10.973zm0 2.067l-11 10.933c.298.036.612-.016.906-.183l13.324-7.54-3.23-3.21z"
+                />
+              </svg>
+              <span>
+                <span class="label-tiny">Google Play</span>
+                <span style="font-size: 0.86rem; font-weight: 500"
+                  >Download</span
+                >
+              </span>
+            </a>
+          </div>
+
+          <div class="hero-meta">
+            <span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Free forever</span
+            >
+            <span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Self-hosted &amp; private</span
+            >
+            <span
+              ><svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              SSO + OIDC</span
+            >
+          </div>
+        </div>
+
+        <div class="phone-stage" aria-hidden="true">
+          <div class="phone">
+            <div class="screen">
+              <img
+                src="assets/app-screenshot.png"
+                alt="Dashboard For Argo CD app showing list of applications with sync status"
+              />
+            </div>
+          </div>
+
+          <div class="float-card float-1">
+            <div
+              class="fc-icon"
+              style="
+                background: color-mix(
+                  in oklch,
+                  var(--green) 22%,
+                  var(--bg-elev-2)
+                );
+                color: var(--green);
+                border: 1px solid
+                  color-mix(in oklch, var(--green) 35%, transparent);
+              "
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <div>
+              <div class="fc-title">Synced</div>
+              <div class="fc-sub mono">argo-rollouts · 9s ago</div>
+            </div>
+          </div>
+
+          <div class="float-card float-2">
+            <div
+              class="fc-icon"
+              style="
+                background: color-mix(
+                  in oklch,
+                  var(--accent-2) 22%,
+                  var(--bg-elev-2)
+                );
+                color: var(--accent-2);
+                border: 1px solid
+                  color-mix(in oklch, var(--accent-2) 35%, transparent);
+              "
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m13 2-3 7h5l-3 7M5 12h14" />
+              </svg>
+            </div>
+            <div>
+              <div class="fc-title">Sync triggered</div>
+              <div class="fc-sub mono">prod / payments-api</div>
+            </div>
+          </div>
+
+          <div class="float-card float-3">
+            <div
+              class="fc-icon"
+              style="
+                background: color-mix(
+                  in oklch,
+                  var(--accent) 18%,
+                  var(--bg-elev-2)
+                );
+                color: var(--accent);
+                border: 1px solid
+                  color-mix(in oklch, var(--accent) 35%, transparent);
+              "
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" />
+              </svg>
+            </div>
+            <div>
+              <div class="fc-title">Live</div>
+              <div class="fc-sub mono">streaming pod logs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FEATURES ============== -->
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">// Features</span>
+          <h2>Everything you need to ship from anywhere.</h2>
+          <p>
+            Real-time visibility and control over your Argo CD applications,
+            designed for the on-call rotation, the airport, and the couch.
+          </p>
+        </div>
+
+        <div class="feature-grid">
+          <div class="feature">
+            <div class="feature-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 12a9 9 0 1 0 9-9" />
+                <path d="M3 4v5h5" />
+              </svg>
+            </div>
+            <h3>Real-time status</h3>
+            <p>
+              Browse all applications with live health and sync status,
+              refreshed automatically.
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 5h18M6 12h12M10 19h4" />
+              </svg>
+            </div>
+            <h3>Powerful filters</h3>
+            <p>
+              Filter by sync state, health, project, namespace, cluster, and
+              labels — instantly.
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m13 2-3 7h5l-3 7" />
+                <path d="M5 12h14" />
+              </svg>
+            </div>
+            <h3>Full control</h3>
+            <p>
+              Trigger sync, hard refresh, and rollback releases — directly from
+              your phone.
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="6" cy="6" r="2" />
+                <circle cx="18" cy="6" r="2" />
+                <circle cx="6" cy="18" r="2" />
+                <circle cx="18" cy="18" r="2" />
+                <path d="M8 6h8M6 8v8M18 8v8M8 18h8" />
+              </svg>
+            </div>
+            <h3>Resource tree</h3>
+            <p>
+              Inspect managed resources, view diffs, and read full YAML
+              manifests on the go.
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 5h16v14H4z" />
+                <path d="m8 10 3 2-3 2M13 14h4" />
+              </svg>
+            </div>
+            <h3>Live logs</h3>
+            <p>
+              Stream pod logs with container selection in real time. Search,
+              follow, share.
+            </p>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M12 2 4 6v6c0 5 3.5 8.5 8 10 4.5-1.5 8-5 8-10V6l-8-4Z"
+                />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </div>
+            <h3>SSO &amp; password login</h3>
+            <p>
+              OIDC/PKCE for SSO — credentials never leave your provider.
+              Username/password as fallback.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== OPEN SOURCE BAND ============== -->
+    <section class="oss-band" id="open-source">
+      <div class="container">
+        <div class="oss-inner">
+          <div>
+            <span class="eyebrow">// Built in the open</span>
+            <h2 style="margin-top: 14px">
+              Free, open source, and yours to fork.
+            </h2>
+            <p>
+              No accounts, no analytics, no upsells. The whole app is on GitHub
+              under a permissive license. Found a bug? Open an issue. Want a
+              feature? Send a PR. The community drives the roadmap.
+            </p>
+
+            <div class="oss-stats">
+              <div class="oss-stat">
+                <div class="num">$0</div>
+                <div class="lbl">Forever free</div>
+              </div>
+              <div class="oss-stat">
+                <div class="num">0 KB</div>
+                <div class="lbl">Telemetry shipped</div>
+              </div>
+              <div class="oss-stat">
+                <div class="num">100%</div>
+                <div class="lbl">Self-hosted data</div>
+              </div>
+              <div class="oss-stat">
+                <div class="num">MIT</div>
+                <div class="lbl">License</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="gh-card">
+            <div class="gh-row">
+              <div class="repo-name">
+                <span class="org">argoproj-labs /</span> mobile-for-argocd
+              </div>
+              <span
+                class="pill"
+                style="font-size: 0.7rem; padding: 3px 9px 3px 6px"
+              >
+                <span
+                  class="dot"
+                  style="
+                    background: var(--green);
+                    box-shadow: 0 0 0 3px
+                      color-mix(in oklch, var(--green) 25%, transparent);
+                  "
+                ></span>
+                <span>active</span>
+              </span>
+            </div>
+            <div
+              style="
+                color: var(--fg-muted);
+                font-size: 0.85rem;
+                line-height: 1.5;
+                margin-bottom: 14px;
+              "
+            >
+              A native iOS and Android app for monitoring and managing Argo CD
+              deployments.
+            </div>
+            <a
+              class="star-btn"
+              href="https://github.com/argoproj-labs/mobile-for-argocd"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polygon
+                  points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"
+                />
+              </svg>
+              Star this project
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== HOW IT WORKS ============== -->
+    <section class="section" style="padding-top: 90px; padding-bottom: 90px">
+      <div class="container">
+        <div class="section-head center">
+          <span class="eyebrow">// How it works</span>
+          <h2>Three steps. No backend to install.</h2>
+        </div>
+
+        <div class="steps">
+          <div
+            style="
+              background: var(--bg-elev);
+              border: 1px solid var(--line-soft);
+              border-radius: var(--radius-lg);
+              padding: 28px;
+              position: relative;
+            "
+          >
+            <div
+              class="mono"
+              style="
+                color: var(--accent);
+                font-size: 0.78rem;
+                letter-spacing: 0.16em;
+              "
+            >
+              01
+            </div>
+            <h3
+              style="
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin: 14px 0 10px;
+                letter-spacing: -0.01em;
+              "
+            >
+              Point at your Argo CD
+            </h3>
+            <p
+              style="
+                color: var(--fg-muted);
+                font-size: 0.92rem;
+                line-height: 1.6;
+              "
+            >
+              Enter the URL of your self-hosted Argo CD server. The app talks
+              directly to it — no relay, no proxy.
+            </p>
+          </div>
+          <div
+            style="
+              background: var(--bg-elev);
+              border: 1px solid var(--line-soft);
+              border-radius: var(--radius-lg);
+              padding: 28px;
+              position: relative;
+            "
+          >
+            <div
+              class="mono"
+              style="
+                color: var(--accent);
+                font-size: 0.78rem;
+                letter-spacing: 0.16em;
+              "
+            >
+              02
+            </div>
+            <h3
+              style="
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin: 14px 0 10px;
+                letter-spacing: -0.01em;
+              "
+            >
+              Sign in with SSO
+            </h3>
+            <p
+              style="
+                color: var(--fg-muted);
+                font-size: 0.92rem;
+                line-height: 1.6;
+              "
+            >
+              Authenticate via OIDC/PKCE through your existing identity
+              provider. Tokens stay in iOS Keychain.
+            </p>
+          </div>
+          <div
+            style="
+              background: var(--bg-elev);
+              border: 1px solid var(--line-soft);
+              border-radius: var(--radius-lg);
+              padding: 28px;
+              position: relative;
+            "
+          >
+            <div
+              class="mono"
+              style="
+                color: var(--accent);
+                font-size: 0.78rem;
+                letter-spacing: 0.16em;
+              "
+            >
+              03
+            </div>
+            <h3
+              style="
+                font-size: 1.1rem;
+                font-weight: 600;
+                margin: 14px 0 10px;
+                letter-spacing: -0.01em;
+              "
+            >
+              Monitor &amp; act
+            </h3>
+            <p
+              style="
+                color: var(--fg-muted);
+                font-size: 0.92rem;
+                line-height: 1.6;
+              "
+            >
+              Watch sync status update in real time. Trigger syncs, refresh, or
+              roll back without unlocking a laptop.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============== FOOTER ============== -->
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-inner">
+          <div class="footer-brand">
+            <a class="brand" href="index.html">
+              <span class="mark" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 3a6 6 0 0 1 6 6v3H6V9a6 6 0 0 1 6-6Z" />
+                  <path
+                    d="M6 12c-.7 1.5-1.5 2.5-3 3M9 12c-.5 2-.2 4 1 5M15 12c.5 2 .2 4-1 5M18 12c.7 1.5 1.5 2.5 3 3M12 12v6"
+                  />
+                </svg>
+              </span>
+              <span>Dashboard For Argo CD</span>
+            </a>
+            <p>
+              A community-built iOS and Android client for Argo CD — free, open
+              source, and made with care.
+            </p>
+          </div>
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="index.html#features">Features</a>
+            <a href="index.html#open-source">Open source</a>
+            <a href="https://apps.apple.com/app/id6766354032">App Store</a>
+            <a
+              href="https://play.google.com/store/apps/details?id=io.argoprojlabs.argocd.mobile"
+              target="_blank"
+              rel="noopener"
+              >Google Play</a
+            >
+          </div>
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="support.html#sso">SSO Setup</a>
+            <a href="support.html">Support</a>
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/issues"
+              target="_blank"
+              rel="noopener"
+              >Report an issue</a
+            >
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/discussions"
+              target="_blank"
+              rel="noopener"
+              >Discussions</a
+            >
+          </div>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <a href="privacy.html">Privacy</a>
+            <a
+              href="https://github.com/argoproj-labs/mobile-for-argocd/blob/main/LICENSE"
+              target="_blank"
+              rel="noopener"
+              >License (MIT)</a
+            >
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <span>© 2026 Alexander Matyushentsev</span>
+          <span class="mono">built with care</span>
+        </div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
 </html>
