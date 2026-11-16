@@ -26,15 +26,15 @@ import {
   ResponseType,
 } from "expo-auth-session";
 
-import { colors } from "../lib/theme";
 import {
+  colors,
   fetchAuthSettings,
   hostFromUrl,
   loginWithPassword,
   resolveOidcConfig,
   type AuthSettings,
   type OidcFlowConfig,
-} from "../lib/api";
+} from "@argoproj-labs/mobile-for-argocd";
 import { type Instance } from "../lib/storage";
 import { useInstanceStore } from "../lib/instanceStore";
 import { ServerSheet } from "../components/server-sheet";

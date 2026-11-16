@@ -1,4 +1,13 @@
-import { COOKIE_SESSION } from "./storage";
+// A connection to one Argo CD server. Auth is supplied by the host app.
+export type ArgoConnection = {
+  /** Stable id, used to scope local state such as favorites. */
+  id: string;
+  serverUrl: string;
+  /** Label shown for the server. Defaults to the URL hostname. */
+  name?: string;
+  /** Headers added to every request, e.g. Authorization. */
+  headers?: () => Record<string, string>;
+};
 
 export interface UserInfo {
   loggedIn: boolean;
@@ -7,11 +16,8 @@ export interface UserInfo {
   groups?: string[];
 }
 
-function authHeader(token: string): Record<string, string> {
-  // COOKIE_SESSION / "anonymous" / empty → no bearer; rely on the cookie jar.
-  return token && token !== "anonymous" && token !== COOKIE_SESSION
-    ? { Authorization: `Bearer ${token}` }
-    : {};
+function authHeader(conn: ArgoConnection): Record<string, string> {
+  return conn.headers?.() ?? {};
 }
 
 // Parse a response as JSON, but fail with a readable message when a proxy
@@ -28,12 +34,9 @@ async function readJson<T>(res: Response): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export async function getUserInfo(
-  serverUrl: string,
-  token: string,
-): Promise<UserInfo> {
-  const res = await fetch(`${serverUrl}/api/v1/session/userinfo`, {
-    headers: authHeader(token),
+export async function getUserInfo(conn: ArgoConnection): Promise<UserInfo> {
+  const res = await fetch(`${conn.serverUrl}/api/v1/session/userinfo`, {
+    headers: authHeader(conn),
   });
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -286,14 +289,13 @@ const WATCH_FIELDS = [
 ].join(",");
 
 export async function getApplication(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
 ): Promise<Application> {
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(name)}?appNamespace=${encodeURIComponent(namespace)}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(name)}?appNamespace=${encodeURIComponent(namespace)}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -301,8 +303,7 @@ export async function getApplication(
 }
 
 export async function refreshApplication(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
   hard = false,
@@ -312,8 +313,8 @@ export async function refreshApplication(
     refresh: hard ? "hard" : "normal",
   });
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(name)}?${params.toString()}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(name)}?${params.toString()}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -338,8 +339,7 @@ export interface SyncApplicationOptions {
 }
 
 export async function syncApplication(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
   opts: SyncApplicationOptions = {},
@@ -348,11 +348,11 @@ export async function syncApplication(
   const strategy = opts.applyOnly ? { apply: { force } } : { hook: { force } };
 
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(name)}/sync`,
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(name)}/sync`,
     {
       method: "POST",
       headers: {
-        ...authHeader(token),
+        ...authHeader(conn),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -376,18 +376,17 @@ export async function syncApplication(
 }
 
 export async function rollbackApplication(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
   id: number,
 ): Promise<void> {
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(name)}/rollback`,
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(name)}/rollback`,
     {
       method: "POST",
       headers: {
-        ...authHeader(token),
+        ...authHeader(conn),
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ id, appNamespace: namespace }),
@@ -432,8 +431,7 @@ export interface ResourceTree {
 }
 
 export async function getResource(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   group: string | undefined,
@@ -451,8 +449,8 @@ export async function getResource(
   if (namespace) params.set("namespace", namespace);
   if (version) params.set("version", version);
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource?${params.toString()}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource?${params.toString()}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -461,8 +459,7 @@ export async function getResource(
 }
 
 export async function deleteResource(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   group: string | undefined,
@@ -484,10 +481,10 @@ export async function deleteResource(
   if (force) params.set("force", "true");
   if (orphan) params.set("orphan", "true");
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource?${params.toString()}`,
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource?${params.toString()}`,
     {
       method: "DELETE",
-      headers: { ...authHeader(token), "Content-Type": "application/json" },
+      headers: { ...authHeader(conn), "Content-Type": "application/json" },
     },
   );
   if (res.status === 401) throw new Error("Unauthorized");
@@ -495,8 +492,7 @@ export async function deleteResource(
 }
 
 export async function patchResource(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   group: string | undefined,
@@ -517,10 +513,10 @@ export async function patchResource(
   if (namespace) params.set("namespace", namespace);
   if (version) params.set("version", version);
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource?${params.toString()}`,
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource?${params.toString()}`,
     {
       method: "POST",
-      headers: { ...authHeader(token), "Content-Type": "application/json" },
+      headers: { ...authHeader(conn), "Content-Type": "application/json" },
       body: JSON.stringify(patch),
     },
   );
@@ -549,8 +545,7 @@ export interface ResourceAction {
 }
 
 export async function getResourceActions(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   group: string | undefined,
@@ -568,8 +563,8 @@ export async function getResourceActions(
   if (namespace) params.set("namespace", namespace);
   if (version) params.set("version", version);
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource/actions?${params.toString()}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource/actions?${params.toString()}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -580,8 +575,7 @@ export async function getResourceActions(
 }
 
 export async function runResourceAction(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   group: string | undefined,
@@ -593,10 +587,10 @@ export async function runResourceAction(
   actionParams: ResourceActionParam[],
 ): Promise<void> {
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource/actions/v2`,
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/resource/actions/v2`,
     {
       method: "POST",
-      headers: { ...authHeader(token), "Content-Type": "application/json" },
+      headers: { ...authHeader(conn), "Content-Type": "application/json" },
       body: JSON.stringify({
         appNamespace,
         namespace,
@@ -617,8 +611,7 @@ export async function runResourceAction(
 }
 
 export async function getManagedResource(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   group: string | undefined,
@@ -634,8 +627,8 @@ export async function getManagedResource(
   if (namespace) params.set("namespace", namespace);
   if (group) params.set("group", group);
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/managed-resources?${params.toString()}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/managed-resources?${params.toString()}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -644,14 +637,13 @@ export async function getManagedResource(
 }
 
 export async function getResourceTree(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
 ): Promise<ResourceTree> {
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(name)}/resource-tree?appNamespace=${encodeURIComponent(namespace)}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(name)}/resource-tree?appNamespace=${encodeURIComponent(namespace)}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -659,8 +651,7 @@ export async function getResourceTree(
 }
 
 export function watchResourceTree(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
   onTree: (tree: ResourceTree) => void,
@@ -670,10 +661,10 @@ export function watchResourceTree(
   const RNEventSource = require("react-native-sse")
     .default as typeof import("react-native-sse").default;
 
-  const url = `${serverUrl}/api/v1/stream/applications/${encodeURIComponent(name)}/resource-tree?appNamespace=${encodeURIComponent(namespace)}`;
+  const url = `${conn.serverUrl}/api/v1/stream/applications/${encodeURIComponent(name)}/resource-tree?appNamespace=${encodeURIComponent(namespace)}`;
 
   return new Promise((resolve, reject) => {
-    const es = new RNEventSource(url, { headers: authHeader(token) });
+    const es = new RNEventSource(url, { headers: authHeader(conn) });
     const cleanup = () => es.close();
 
     es.addEventListener("message", (event) => {
@@ -729,14 +720,13 @@ export interface ManagedResource {
 }
 
 export async function getManagedResources(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
 ): Promise<ManagedResource[]> {
   const res = await fetch(
-    `${serverUrl}/api/v1/applications/${encodeURIComponent(name)}/managed-resources?appNamespace=${encodeURIComponent(namespace)}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(name)}/managed-resources?appNamespace=${encodeURIComponent(namespace)}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -745,12 +735,11 @@ export async function getManagedResources(
 }
 
 export async function listApplications(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
 ): Promise<{ items: Application[]; resourceVersion: string }> {
   const res = await fetch(
-    `${serverUrl}/api/v1/applications?fields=${encodeURIComponent(LIST_FIELDS)}`,
-    { headers: authHeader(token) },
+    `${conn.serverUrl}/api/v1/applications?fields=${encodeURIComponent(LIST_FIELDS)}`,
+    { headers: authHeader(conn) },
   );
   if (res.status === 401) throw new Error("Unauthorized");
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -765,8 +754,7 @@ export async function listApplications(
 }
 
 export function watchApplication(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   name: string,
   namespace: string,
   resourceVersion: string,
@@ -782,11 +770,11 @@ export function watchApplication(
     appNamespace: namespace,
     resourceVersion,
   });
-  const url = `${serverUrl}/api/v1/stream/applications?${params.toString()}`;
+  const url = `${conn.serverUrl}/api/v1/stream/applications?${params.toString()}`;
 
   return new Promise((resolve, reject) => {
     const es = new RNEventSource(url, {
-      headers: authHeader(token),
+      headers: authHeader(conn),
     });
 
     const cleanup = () => {
@@ -846,8 +834,7 @@ export interface LogEntry {
 }
 
 export function streamLogs(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   appName: string,
   appNamespace: string,
   namespace: string,
@@ -884,10 +871,10 @@ export function streamLogs(
   }
   if (previous) params.set("previous", "true");
 
-  const url = `${serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/logs?${params.toString()}`;
+  const url = `${conn.serverUrl}/api/v1/applications/${encodeURIComponent(appName)}/logs?${params.toString()}`;
 
   const es = new RNEventSource(url, {
-    headers: authHeader(token),
+    headers: authHeader(conn),
   });
 
   const cleanup = () => es.close();
@@ -930,8 +917,7 @@ export function streamLogs(
 }
 
 export function watchApplications(
-  serverUrl: string,
-  token: string,
+  conn: ArgoConnection,
   resourceVersion: string,
   onEvent: (type: string, app: Application) => void,
   signal: AbortSignal,
@@ -940,11 +926,11 @@ export function watchApplications(
   const RNEventSource = require("react-native-sse")
     .default as typeof import("react-native-sse").default;
 
-  const url = `${serverUrl}/api/v1/stream/applications?resourceVersion=${encodeURIComponent(resourceVersion)}&fields=${encodeURIComponent(WATCH_FIELDS)}`;
+  const url = `${conn.serverUrl}/api/v1/stream/applications?resourceVersion=${encodeURIComponent(resourceVersion)}&fields=${encodeURIComponent(WATCH_FIELDS)}`;
 
   return new Promise((resolve, reject) => {
     const es = new RNEventSource(url, {
-      headers: authHeader(token),
+      headers: authHeader(conn),
     });
 
     const cleanup = () => {

@@ -13,8 +13,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import { colors } from "../lib/theme";
-import { hostFromUrl, normalizeUrl } from "../lib/api";
+import {
+  colors,
+  hostFromUrl,
+  normalizeUrl,
+} from "@argoproj-labs/mobile-for-argocd";
 import { type Instance, hasSession } from "../lib/storage";
 import { useInstanceStore } from "../lib/instanceStore";
 

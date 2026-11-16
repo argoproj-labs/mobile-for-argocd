@@ -12,9 +12,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
 
-import { colors } from "../lib/theme";
-import { getHealth } from "../lib/status";
-import type { ResourceNode } from "../lib/api";
+import { colors } from "../theme";
+import { getHealth } from "../status";
+import type { ResourceNode } from "../api";
 import {
   ResourceDetailContent,
   type ResourceDetailRef,

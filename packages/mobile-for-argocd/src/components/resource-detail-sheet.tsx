@@ -30,15 +30,15 @@ import * as jsonMergePatch from "json-merge-patch";
 import { diffLines as computeDiff } from "diff";
 import type { ComponentProps } from "react";
 
-import { colors } from "../lib/theme";
-import { getHealth, getSync } from "../lib/status";
-import { useArgoClient } from "../lib/client";
+import { colors } from "../theme";
+import { getHealth, getSync } from "../status";
+import { useArgoClient } from "../client";
 import type {
   LogEntry,
   ManagedResource,
   ResourceAction,
   ResourceActionParam,
-} from "../lib/api";
+} from "../api";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 const MONO = Platform.OS === "ios" ? "Menlo" : "monospace";

@@ -1,0 +1,36 @@
+name: Publish library
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/mobile-for-argocd/**"
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Publish snapshot to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      # Snapshot version per commit, e.g. 0.1.0-sha.abc1234
+      - name: Set snapshot version
+        working-directory: packages/mobile-for-argocd
+        run: |
+          base=$(node -p "require('./package.json').version")
+          npm version --no-git-tag-version "${base}-sha.${GITHUB_SHA::7}"
+
+      - name: Publish
+        working-directory: packages/mobile-for-argocd
+        run: npm publish --access public --tag snapshot --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

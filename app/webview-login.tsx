@@ -13,8 +13,11 @@ import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { WebView, type WebViewNavigation } from "react-native-webview";
 
-import { colors } from "../lib/theme";
-import { getUserInfo, hostFromUrl } from "../lib/api";
+import {
+  colors,
+  getUserInfo,
+  hostFromUrl,
+} from "@argoproj-labs/mobile-for-argocd";
 import { COOKIE_SESSION } from "../lib/storage";
 import { useInstanceStore } from "../lib/instanceStore";
 
@@ -39,7 +42,7 @@ export default function WebViewLogin() {
       if (done.current || !server) return;
       if (manual) setChecking(true);
       try {
-        const info = await getUserInfo(server, "");
+        const info = await getUserInfo({ id: server, serverUrl: server });
         if (info?.loggedIn) {
           done.current = true;
           if (server) await upsertInstance(server, COOKIE_SESSION);

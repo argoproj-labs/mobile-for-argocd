@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { ArgoConnection } from "@argoproj-labs/mobile-for-argocd";
 
 const SERVER_URL_KEY = "argocd:server-url";
 const TOKEN_KEY = "argocd:token";
@@ -33,6 +34,16 @@ export type Instance = {
 export const hasSession = (inst: Instance | null | undefined): boolean =>
   !!inst && inst.token !== "";
 
+// "anonymous" and cookie sessions send no bearer; auth rides the cookie jar.
+export function instanceConnection(inst: Instance): ArgoConnection {
+  const { token } = inst;
+  const bearer: Record<string, string> =
+    token && token !== "anonymous" && token !== COOKIE_SESSION
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+  return { id: inst.id, serverUrl: inst.url, headers: () => bearer };
+}
+
 // ── Multi-instance storage ─────────────────────────────────────
 
 const INSTANCES_KEY = "argocd:instances";
@@ -58,23 +69,6 @@ export const activeInstanceStorage = {
   get: () => AsyncStorage.getItem(ACTIVE_INSTANCE_KEY),
   set: (id: string) => AsyncStorage.setItem(ACTIVE_INSTANCE_KEY, id),
   clear: () => AsyncStorage.removeItem(ACTIVE_INSTANCE_KEY),
-};
-
-export const instanceFavoritesStorage = {
-  get: async (instanceId: string): Promise<Set<string>> => {
-    const raw = await AsyncStorage.getItem(FAVORITES_KEY_PREFIX + instanceId);
-    if (!raw) return new Set();
-    try {
-      return new Set(JSON.parse(raw) as string[]);
-    } catch {
-      return new Set();
-    }
-  },
-  set: (instanceId: string, favs: Set<string>) =>
-    AsyncStorage.setItem(
-      FAVORITES_KEY_PREFIX + instanceId,
-      JSON.stringify(Array.from(favs)),
-    ),
 };
 
 function generateId(): string {
@@ -155,18 +149,3 @@ export async function migrateLegacyStorage(): Promise<void> {
   // from them on the next launch.
   await Promise.all([serverStorage.clear(), tokenStorage.clear()]);
 }
-
-// Legacy favorites export — kept so old import sites compile; superseded by
-// instanceFavoritesStorage for new code.
-const FAVORITES_KEY = "argocd:favorites";
-
-export const favoritesStorage = {
-  get: async (): Promise<Set<string>> => {
-    const raw = await AsyncStorage.getItem(FAVORITES_KEY);
-    if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as string[]);
-  },
-  set: async (favs: Set<string>): Promise<void> => {
-    await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favs)));
-  },
-};

@@ -1,38 +1,47 @@
-import { Stack, router } from "expo-router";
-import {
-  QueryCache,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
-import { ArgoClientProvider } from "../../lib/client";
-import { ResourceFilterProvider } from "../../components/resource-filter";
-
-const queryClient = new QueryClient({
-  queryCache: new QueryCache({
-    onError: (error) => {
-      if (error instanceof Error && error.message === "Unauthorized") {
-        router.replace("/login");
-      }
-    },
-  }),
-  defaultOptions: {
-    queries: {
-      staleTime: 0,
-      gcTime: 0,
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
+import { useCallback, useEffect, useMemo } from "react";
+import { Stack, useRouter } from "expo-router";
+import { ArgoProvider, logout } from "@argoproj-labs/mobile-for-argocd";
+import { useInstanceStore } from "../../lib/instanceStore";
+import { instanceConnection } from "../../lib/storage";
+import { InstanceSwitcher } from "../../components/instance-switcher";
 
 export default function AppLayout() {
+  const router = useRouter();
+  const { activeSession, isLoaded, removeInstance } = useInstanceStore();
+
+  // A server that has been added but never signed in to has no session, so
+  // it routes to login rather than rendering the app against a blank token.
+  useEffect(() => {
+    if (isLoaded && !activeSession) router.replace("/login");
+  }, [isLoaded, activeSession, router]);
+
+  const connection = useMemo(
+    () => (activeSession ? instanceConnection(activeSession) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeSession?.id, activeSession?.url, activeSession?.token],
+  );
+
+  const onUnauthorized = useCallback(() => router.replace("/login"), [router]);
+
+  // Expire the server session cookie before dropping local state, so a
+  // browser-login (cookie) session doesn't silently persist in the jar.
+  // With no instance left the effect above routes to login.
+  const onLogout = useCallback(async () => {
+    if (!activeSession) return;
+    await logout(activeSession.url);
+    await removeInstance(activeSession.id);
+  }, [activeSession, removeInstance]);
+
+  if (!connection) return null;
+
   return (
-    <ArgoClientProvider>
-      <QueryClientProvider client={queryClient}>
-        <ResourceFilterProvider>
-          <Stack screenOptions={{ headerShown: false }} />
-        </ResourceFilterProvider>
-      </QueryClientProvider>
-    </ArgoClientProvider>
+    <ArgoProvider
+      connection={connection}
+      onUnauthorized={onUnauthorized}
+      onLogout={onLogout}
+      InstanceSwitcher={InstanceSwitcher}
+    >
+      <Stack screenOptions={{ headerShown: false }} />
+    </ArgoProvider>
   );
 }

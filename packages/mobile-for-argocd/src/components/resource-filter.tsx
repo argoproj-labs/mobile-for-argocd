@@ -13,8 +13,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import { colors } from "../lib/theme";
-import { getHealth, getSync } from "../lib/status";
+import { colors } from "../theme";
+import { getHealth, getSync } from "../status";
 
 // ── Types ──────────────────────────────────────────────────────
 

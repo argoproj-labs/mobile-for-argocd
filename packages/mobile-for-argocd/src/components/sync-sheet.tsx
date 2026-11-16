@@ -14,12 +14,12 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
-import { colors } from "../lib/theme";
+import { colors } from "../theme";
 import {
   appSource,
   type Application,
   type SyncApplicationOptions,
-} from "../lib/api";
+} from "../api";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 

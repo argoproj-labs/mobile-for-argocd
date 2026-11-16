@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useEffect, useMemo } from "react";
-import { useRouter } from "expo-router";
+import { createContext, useContext } from "react";
 import {
   deleteResource,
   patchResource,
@@ -26,14 +25,19 @@ import {
   type ResourceTree,
   type SyncApplicationOptions,
   type UserInfo,
+  type ArgoConnection,
 } from "./api";
-import { useInstanceStore } from "./instanceStore";
 
 export class ArgoClient {
-  constructor(
-    readonly serverUrl: string,
-    readonly token: string,
-  ) {}
+  constructor(readonly connection: ArgoConnection) {}
+
+  get serverUrl(): string {
+    return this.connection.serverUrl;
+  }
+
+  get displayName(): string {
+    return this.connection.name ?? this.hostname;
+  }
 
   get hostname(): string {
     try {
@@ -116,21 +120,15 @@ export class ArgoClient {
   }
 
   listApplications() {
-    return listApplications(this.serverUrl, this.token);
+    return listApplications(this.connection);
   }
 
   getApplication(name: string, namespace: string) {
-    return getApplication(this.serverUrl, this.token, name, namespace);
+    return getApplication(this.connection, name, namespace);
   }
 
   refreshApplication(name: string, namespace: string, hard = false) {
-    return refreshApplication(
-      this.serverUrl,
-      this.token,
-      name,
-      namespace,
-      hard,
-    );
+    return refreshApplication(this.connection, name, namespace, hard);
   }
 
   syncApplication(
@@ -138,15 +136,15 @@ export class ArgoClient {
     namespace: string,
     opts: SyncApplicationOptions = {},
   ) {
-    return syncApplication(this.serverUrl, this.token, name, namespace, opts);
+    return syncApplication(this.connection, name, namespace, opts);
   }
 
   rollbackApplication(name: string, namespace: string, id: number) {
-    return rollbackApplication(this.serverUrl, this.token, name, namespace, id);
+    return rollbackApplication(this.connection, name, namespace, id);
   }
 
   getUserInfo(): Promise<UserInfo> {
-    return getUserInfo(this.serverUrl, this.token);
+    return getUserInfo(this.connection);
   }
 
   watchApplication(
@@ -157,8 +155,7 @@ export class ArgoClient {
     signal: AbortSignal,
   ) {
     return watchApplication(
-      this.serverUrl,
-      this.token,
+      this.connection,
       name,
       namespace,
       resourceVersion,
@@ -168,7 +165,7 @@ export class ArgoClient {
   }
 
   getManagedResources(name: string, namespace: string) {
-    return getManagedResources(this.serverUrl, this.token, name, namespace);
+    return getManagedResources(this.connection, name, namespace);
   }
 
   getResource(
@@ -181,8 +178,7 @@ export class ArgoClient {
     resourceName: string,
   ) {
     return getResource(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       group,
@@ -202,8 +198,7 @@ export class ArgoClient {
     resourceName: string,
   ) {
     return getManagedResource(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       group,
@@ -214,7 +209,7 @@ export class ArgoClient {
   }
 
   getResourceTree(name: string, namespace: string) {
-    return getResourceTree(this.serverUrl, this.token, name, namespace);
+    return getResourceTree(this.connection, name, namespace);
   }
 
   watchResourceTree(
@@ -223,14 +218,7 @@ export class ArgoClient {
     onTree: (tree: ResourceTree) => void,
     signal: AbortSignal,
   ) {
-    return watchResourceTree(
-      this.serverUrl,
-      this.token,
-      name,
-      namespace,
-      onTree,
-      signal,
-    );
+    return watchResourceTree(this.connection, name, namespace, onTree, signal);
   }
 
   deleteResource(
@@ -245,8 +233,7 @@ export class ArgoClient {
     orphan: boolean,
   ): Promise<void> {
     return deleteResource(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       group,
@@ -271,8 +258,7 @@ export class ArgoClient {
     patchType?: string,
   ): Promise<void> {
     return patchResource(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       group,
@@ -295,8 +281,7 @@ export class ArgoClient {
     resourceName: string,
   ): Promise<ResourceAction[]> {
     return getResourceActions(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       group,
@@ -319,8 +304,7 @@ export class ArgoClient {
     actionParams: ResourceActionParam[],
   ): Promise<void> {
     return runResourceAction(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       group,
@@ -350,8 +334,7 @@ export class ArgoClient {
     onDone: () => void,
   ): () => void {
     return streamLogs(
-      this.serverUrl,
-      this.token,
+      this.connection,
       appName,
       appNamespace,
       namespace,
@@ -374,56 +357,15 @@ export class ArgoClient {
     onEvent: (type: string, app: Application) => void,
     signal: AbortSignal,
   ) {
-    return watchApplications(
-      this.serverUrl,
-      this.token,
-      resourceVersion,
-      onEvent,
-      signal,
-    );
+    return watchApplications(this.connection, resourceVersion, onEvent, signal);
   }
 }
 
-const ArgoClientContext = createContext<ArgoClient | null>(null);
+export const ArgoClientContext = createContext<ArgoClient | null>(null);
 
 export function useArgoClient(): ArgoClient {
   const client = useContext(ArgoClientContext);
   if (!client)
-    throw new Error("useArgoClient must be used within ArgoClientProvider");
+    throw new Error("useArgoClient must be used within ArgoProvider");
   return client;
-}
-
-export function ArgoClientProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const router = useRouter();
-  const { activeSession, isLoaded } = useInstanceStore();
-
-  // A server that has been added but never signed in to has no session, so
-  // it routes to login rather than rendering the app against a blank token.
-  useEffect(() => {
-    if (!isLoaded) return;
-    if (!activeSession) {
-      router.replace("/login");
-    }
-  }, [isLoaded, activeSession, router]);
-
-  const client = useMemo(
-    () =>
-      activeSession
-        ? new ArgoClient(activeSession.url, activeSession.token)
-        : null,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [activeSession?.url, activeSession?.token],
-  );
-
-  if (!client) return null;
-
-  return (
-    <ArgoClientContext.Provider value={client}>
-      {children}
-    </ArgoClientContext.Provider>
-  );
 }
